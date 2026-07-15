@@ -15,9 +15,14 @@ Point any browser's new-tab page at your deployed URL and you're done.
 
 ## Features
 
-- **Shipped** — your GitHub contribution heatmap, a stat row (pushes, PRs
-  opened, merged, new repos — zero-value cards hide themselves), and a list of
-  your most recent public activity with relative timestamps.
+- **Search bar** — autofocused on load, submits to Google or navigates
+  directly for URL-like input. Restores "open a tab, start typing" now that
+  the browser's own new-tab landing is overridden.
+- **Shipped** — your real GitHub contribution graph (same per-day data as
+  your profile page, not an approximation), a stat row (commits, PRs
+  opened/drafted/merged/closed, new repos — zero-value cards hide
+  themselves), and a list of your most recent activity with relative
+  timestamps and GitHub-style state icons.
 - **Shortcuts** — a configurable grid of links with official brand icons
   (GitHub, Gmail, Google Calendar, Notion, LinkedIn, X, or any URL via a
   generic globe icon), muted by default and tinted with the real brand color
@@ -144,10 +149,18 @@ falls back to the public Events API (public activity only).
 - GitHub's Search API has its own rate limit (30 requests/min authenticated,
   10/min unauthenticated) — plenty for a new-tab page, but worth knowing if
   you're debugging.
-- The contribution heatmap is rendered via the free
+- The contribution heatmap is built from GitHub's own real per-day
+  contribution data (`api/contributions.js` fetches
+  `github.com/users/<user>/contributions`, the same public page your profile
+  uses — no token needed), rendered as our own SVG so it can be themed with
+  this app's own tokens. If that endpoint isn't reachable (local static
+  preview, or before the function is deployed), it falls back to the free
   [ghchart.rshah.org](https://github.com/2016rshah/githubchart-api) image
-  service — a third-party dependency with no auth required. Swap it for
-  GitHub's own contributions SVG if you'd rather avoid that.
+  service instead — a third-party dependency, only used as a fallback.
+- The heatmap mirrors your **public** GitHub profile graph. If you want
+  private contributions included, enable "Include private contributions on
+  my profile" in your GitHub account settings — the graph (and this heatmap)
+  will then reflect it.
 - The page sets `<meta name="robots" content="noindex, nofollow">` since it's
   meant to be a personal, unlisted URL rather than a discoverable page.
 

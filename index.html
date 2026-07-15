@@ -11,6 +11,23 @@
 </head>
 <body>
   <main class="page">
+    <form id="search-form" class="search-form" role="search" autocomplete="off">
+      <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="m21 21-4.3-4.3"></path>
+      </svg>
+      <input
+        id="search-input"
+        class="search-input"
+        type="text"
+        placeholder="Search Google or enter a URL"
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+        autofocus
+      />
+    </form>
+
     <header class="greeting">
       <p class="greeting-date" id="date"></p>
       <h1 class="greeting-title" id="greeting"></h1>
@@ -23,7 +40,7 @@
           <p class="section-meta" id="log-user"></p>
         </div>
 
-        <img class="heatmap" id="heatmap" alt="" />
+        <div class="heatmap" id="heatmap"></div>
 
         <div class="stats" id="stats"></div>
 

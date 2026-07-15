@@ -36,6 +36,53 @@ a {
   padding: var(--space-8) var(--gap-h) var(--space-7);
 }
 
+/* ---- Search bar ----
+   The new-tab override replaces the browser's own omnibox landing behavior,
+   so this recreates "open a tab, start typing" as the default action. */
+
+.search-form {
+  position: relative;
+  max-width: 34rem;
+  margin: 0 auto var(--space-8);
+}
+
+.search-icon {
+  position: absolute;
+  left: var(--space-4);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.125rem;
+  height: 1.125rem;
+  fill: none;
+  stroke: var(--color-muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: var(--space-4) var(--space-4) var(--space-4) var(--space-8);
+  font-family: inherit;
+  font-size: var(--text-base);
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.search-input::placeholder {
+  color: var(--color-muted);
+}
+
+.search-input:focus-visible {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-soft);
+}
+
 /* ---- Greeting ---- */
 
 .greeting {
@@ -166,20 +213,49 @@ a {
   .shortcut[data-brand="globe"] svg    { color: var(--color-accent); }
 }
 
-/* ---- Contribution heatmap ---- */
+/* ---- Contribution heatmap ----
+   Primary: real per-day levels from GitHub's own contribution graph
+   (api/contributions.js), rendered as our own SVG so we control color via
+   tokens instead of GitHub's page CSS. Fallback: a third-party image
+   (ghchart.rshah.org) when the proxy isn't available. */
 
 .heatmap {
   display: block;
   width: 100%;
-  height: auto;
+  padding: var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
   margin-bottom: var(--space-5);
 }
 
+.heatmap-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.heatmap-label {
+  font-family: var(--font-sans);
+  font-size: 0.5rem;
+  fill: var(--color-muted);
+}
+
+.heatmap-cell[data-level="0"] { fill: var(--heat-0); }
+.heatmap-cell[data-level="1"] { fill: var(--heat-1); }
+.heatmap-cell[data-level="2"] { fill: var(--heat-2); }
+.heatmap-cell[data-level="3"] { fill: var(--heat-3); }
+.heatmap-cell[data-level="4"] { fill: var(--heat-4); }
+
+/* Fallback-only image (ghchart.rshah.org) */
+.heatmap-fallback-img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 @media (prefers-color-scheme: dark) {
-  .heatmap {
+  .heatmap-fallback-img {
     filter: invert(1) hue-rotate(180deg);
   }
 }

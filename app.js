@@ -122,10 +122,131 @@ function renderShortcuts() {
   }
 }
 
-function renderHeatmap() {
-  const img = document.getElementById("heatmap");
-  img.src = `https://ghchart.rshah.org/4a6fa5/${CONFIG.githubUser}`;
-  img.alt = `${CONFIG.githubUser}'s GitHub contribution graph`;
+// Builds our own SVG from GitHub's real per-day contribution levels (see
+// api/contributions.js) — same grid density as your actual profile graph,
+// colored via our own tokens rather than GitHub's page CSS.
+function buildHeatmapSvg(days) {
+  const cell = 10;
+  const gap = 3;
+  const pitch = cell + gap;
+  const originX = 24;
+  const originY = 14;
+
+  const parsed = days.map((d) => ({ ...d, dateObj: new Date(`${d.date}T00:00:00Z`) }));
+  const minDate = new Date(Math.min(...parsed.map((d) => d.dateObj.getTime())));
+  const weekStart = new Date(minDate);
+  weekStart.setUTCDate(weekStart.getUTCDate() - weekStart.getUTCDay());
+
+  const columns = new Map();
+  for (const d of parsed) {
+    const col = Math.round((d.dateObj - weekStart) / (7 * 86400000));
+    const row = d.dateObj.getUTCDay();
+    if (!columns.has(col)) columns.set(col, {});
+    columns.get(col)[row] = d;
+  }
+  const numCols = Math.max(...columns.keys()) + 1;
+
+  const width = originX + numCols * pitch;
+  const height = originY + 7 * pitch;
+
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("class", "heatmap-svg");
+  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", "GitHub contribution graph");
+
+  const dayLabels = { 1: "Mon", 3: "Wed", 5: "Fri" };
+  for (const [row, label] of Object.entries(dayLabels)) {
+    const t = document.createElementNS(ns, "text");
+    t.setAttribute("x", 0);
+    t.setAttribute("y", originY + Number(row) * pitch + cell - 1);
+    t.setAttribute("class", "heatmap-label");
+    t.textContent = label;
+    svg.appendChild(t);
+  }
+
+  let lastMonth = null;
+  for (let col = 0; col < numCols; col++) {
+    const colDate = new Date(weekStart);
+    colDate.setUTCDate(colDate.getUTCDate() + col * 7);
+    const month = colDate.getUTCMonth();
+    if (month !== lastMonth) {
+      const t = document.createElementNS(ns, "text");
+      t.setAttribute("x", originX + col * pitch);
+      t.setAttribute("y", 9);
+      t.setAttribute("class", "heatmap-label");
+      t.textContent = colDate.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" });
+      svg.appendChild(t);
+      lastMonth = month;
+    }
+
+    const cellsInCol = columns.get(col) || {};
+    for (let row = 0; row < 7; row++) {
+      const info = cellsInCol[row];
+      if (!info) continue;
+      const rect = document.createElementNS(ns, "rect");
+      rect.setAttribute("x", originX + col * pitch);
+      rect.setAttribute("y", originY + row * pitch);
+      rect.setAttribute("width", cell);
+      rect.setAttribute("height", cell);
+      rect.setAttribute("rx", 2);
+      rect.setAttribute("class", "heatmap-cell");
+      rect.dataset.level = info.level;
+      const title = document.createElementNS(ns, "title");
+      title.textContent = `${info.level > 0 ? "Contributions" : "No contributions"} on ${info.date}`;
+      rect.appendChild(title);
+      svg.appendChild(rect);
+    }
+  }
+
+  return svg;
+}
+
+async function renderHeatmap() {
+  const container = document.getElementById("heatmap");
+  try {
+    const res = await fetch(`/api/contributions?username=${CONFIG.githubUser}`);
+    if (!res.ok) throw new Error(`proxy ${res.status}`);
+    const { days } = await res.json();
+    container.textContent = "";
+    container.appendChild(buildHeatmapSvg(days));
+  } catch {
+    // Fallback: a third-party image render, used when the proxy isn't
+    // available (local static preview, or not yet deployed).
+    const img = document.createElement("img");
+    img.className = "heatmap-fallback-img";
+    img.src = `https://ghchart.rshah.org/4a6fa5/${CONFIG.githubUser}`;
+    img.alt = `${CONFIG.githubUser}'s GitHub contribution graph`;
+    container.textContent = "";
+    container.appendChild(img);
+  }
+}
+
+// ---- Search bar ----
+// Recreates "open a new tab, start typing" now that the browser's own
+// omnibox landing behavior is replaced by this page.
+function looksLikeUrl(query) {
+  if (/\s/.test(query)) return false;
+  if (/^https?:\/\//i.test(query)) return true;
+  return /^[a-z0-9-]+(\.[a-z0-9-]+)+([:/?#].*)?$/i.test(query);
+}
+
+function initSearch() {
+  const form = document.getElementById("search-form");
+  const input = document.getElementById("search-input");
+  input.focus();
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const query = input.value.trim();
+    if (!query) return;
+    window.location.href = looksLikeUrl(query)
+      ? /^https?:\/\//i.test(query)
+        ? query
+        : `https://${query}`
+      : `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+  });
 }
 
 // ---- GitHub activity ----
@@ -463,6 +584,7 @@ function rowsFromEvents(events, cutoff) {
 }
 
 async function init() {
+  initSearch();
   renderGreeting();
   renderShortcuts();
   renderHeatmap();
