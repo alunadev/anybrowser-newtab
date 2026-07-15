@@ -99,17 +99,20 @@ surface private-repo activity. It requires them to create a GitHub personal
 access token themselves — you cannot do this step for them, and you should
 never ask them to paste a token into chat.
 
-1. Tell them to create a **fine-grained personal access token** at
-   github.com/settings/tokens with:
-   - Repository permissions → **Metadata: Read-only**.
-   - Account permissions → **Events: Read-only** — required for private
-     activity to appear at all. This is easy to miss because it's a
-     separate "Account permissions" section, not under repository
-     permissions. Without it, the token still works but every event comes
-     back `"public": true` — private pushes silently never show up, with no
-     error to signal why.
-   - Repository access → All repositories (or explicitly include the
-     private repos they want counted).
+1. Tell them to create a **classic personal access token** (not
+   fine-grained) at github.com/settings/tokens/new with the **`repo`**
+   scope. Fine-grained tokens cannot do this — there's no fine-grained
+   permission that unlocks private events on `GET /users/{username}/events`
+   (GitHub's own docs mention an "Events" user permission for this endpoint,
+   but it doesn't actually exist in the fine-grained permission system —
+   confirmed against GitHub's docs, "Events" only exists as an
+   organization-level permission for a different endpoint). Without the
+   right token type, requests still succeed with no error — every event
+   just comes back `"public": true`, private activity silently missing.
+   Tell the user plainly: classic `repo` scope grants read *and* write to
+   their repos (no read-only option exists for classic scopes) — let them
+   decide if that trade-off is acceptable before creating it. The token
+   only lives in Vercel's env vars, never reaches the browser.
 2. They add it as environment variables on their Vercel project:
    `GITHUB_TOKEN` (the token) and `GITHUB_USERNAME` (their GitHub username,
    required — must match the token's account).

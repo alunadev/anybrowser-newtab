@@ -1,12 +1,16 @@
 // Vercel serverless function — the only place the GitHub token is used.
 // It never reaches the client; the browser calls this endpoint instead of
 // api.github.com directly. Requires env vars on the Vercel project:
-//   GITHUB_TOKEN      fine-grained PAT, read-only. Needs BOTH:
-//                       - Repository permissions → Metadata: Read-only
-//                       - Account permissions → Events: Read-only
-//                     The "Events" permission is easy to miss — without it
-//                     the token still works, but every event silently comes
-//                     back "public": true and private activity never shows.
+//   GITHUB_TOKEN      a CLASSIC personal access token with the "repo" scope.
+//                     Fine-grained PATs cannot do this — there is no
+//                     fine-grained permission that unlocks private events on
+//                     GET /users/{username}/events; that endpoint's own docs
+//                     mention an "Events" user permission, but it doesn't
+//                     actually exist in the fine-grained permission system
+//                     (confirmed against GitHub's docs — "Events" only
+//                     exists as an org-level permission for a different
+//                     endpoint). A classic "repo"-scoped token is the only
+//                     way to surface private-repo activity here.
 //   GITHUB_USERNAME   your GitHub username (should match config.js)
 
 module.exports = async function handler(req, res) {

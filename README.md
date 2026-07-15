@@ -105,23 +105,31 @@ this on a public fork — your `config.js` would be visible to anyone.
 By default, GitHub activity comes from the public, unauthenticated Events
 API — no setup needed, and it's plenty for personal use.
 
-If you want higher rate limits or to include your private-repo activity,
-`api/github-stats.js` is a Vercel serverless function that proxies GitHub
-with a token that never reaches the browser. To enable it, set these on your
-Vercel project (Settings → Environment Variables):
+If you want higher rate limits, `api/github-stats.js` is a Vercel serverless
+function that proxies GitHub with a token that never reaches the browser. Set
+these on your Vercel project (Settings → Environment Variables):
 
-- `GITHUB_TOKEN` — a [fine-grained personal access
-  token](https://github.com/settings/tokens), read-only. Grant:
-  - **Repository permissions → Metadata: Read-only** (lets the token see
-    repos exist at all).
-  - **Account permissions → Events: Read-only** — this is the one that's
-    easy to miss, since it's a separate section from repository permissions.
-    Without it, the token still "works" (no error), but the Events API
-    silently returns public activity only — every event comes back with
-    `"public": true`, private pushes never show up.
-  - **Repository access: All repositories** (or explicitly include the
-    private repos whose activity you want to see).
+- `GITHUB_TOKEN` — a **classic** [personal access
+  token](https://github.com/settings/tokens) (not fine-grained) with the
+  `repo` scope.
 - `GITHUB_USERNAME` — required, must match the account the token belongs to.
+
+**Why classic, not fine-grained?** Fine-grained PATs cannot unlock private
+activity on this endpoint at all — there's no fine-grained permission that
+does it. GitHub's own docs for `GET /users/{username}/events` mention an
+"Events" user permission, but it doesn't actually exist in the fine-grained
+permission system (it only exists as an *organization*-level permission for
+an unrelated endpoint). Without the right access, the token still works —
+you just silently get public events only, no error. A classic token with
+`repo` scope is the only way to surface private-repo activity here.
+
+**Trade-off to weigh**: classic scopes are all-or-nothing — `repo` grants
+read *and* write to every repo (public and private) the token's owner can
+access, there's no read-only classic scope. Since the token only lives in
+Vercel's environment variables (read server-side by the function, never sent
+to the browser), the practical exposure is tied to the security of your
+Vercel account itself, not to this app. If you're not comfortable with that
+trade-off, skip this section — the page works great on public activity alone.
 
 **Never** put a token in `config.js` or anything that ships to the browser —
 only in Vercel's environment variables, which the serverless function reads
