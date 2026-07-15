@@ -7,6 +7,12 @@ dependencies to install.
 
 Point any browser's new-tab page at your deployed URL and you're done.
 
+> **Using a coding agent (Claude Code, Codex, Cursor, etc.)?** Hand it this
+> repo and tell it to read [`AGENTS.md`](AGENTS.md) — it'll interview you for
+> your name, GitHub username, and shortcuts, then set up and optionally
+> deploy your personal copy for you. That's the fastest path through
+> everything below.
+
 ## Features
 
 - **Shipped** — your GitHub contribution heatmap, a stat row (pushes, PRs
