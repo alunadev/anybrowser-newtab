@@ -1,8 +1,12 @@
 // Vercel serverless function — the only place the GitHub token is used.
 // It never reaches the client; the browser calls this endpoint instead of
 // api.github.com directly. Requires env vars on the Vercel project:
-//   GITHUB_TOKEN      fine-grained PAT, read-only, "Metadata" permission
-//                     (add repo access too if you want private activity)
+//   GITHUB_TOKEN      fine-grained PAT, read-only. Needs BOTH:
+//                       - Repository permissions → Metadata: Read-only
+//                       - Account permissions → Events: Read-only
+//                     The "Events" permission is easy to miss — without it
+//                     the token still works, but every event silently comes
+//                     back "public": true and private activity never shows.
 //   GITHUB_USERNAME   your GitHub username (should match config.js)
 
 module.exports = async function handler(req, res) {

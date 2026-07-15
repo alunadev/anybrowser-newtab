@@ -111,11 +111,17 @@ with a token that never reaches the browser. To enable it, set these on your
 Vercel project (Settings → Environment Variables):
 
 - `GITHUB_TOKEN` — a [fine-grained personal access
-  token](https://github.com/settings/tokens), read-only. Grant "Metadata:
-  Read-only" for your own account to keep it minimal, or add specific repos
-  if you want private activity to show up.
-- `GITHUB_USERNAME` — optional, defaults to whatever you hardcode as a
-  fallback in the function if unset.
+  token](https://github.com/settings/tokens), read-only. Grant:
+  - **Repository permissions → Metadata: Read-only** (lets the token see
+    repos exist at all).
+  - **Account permissions → Events: Read-only** — this is the one that's
+    easy to miss, since it's a separate section from repository permissions.
+    Without it, the token still "works" (no error), but the Events API
+    silently returns public activity only — every event comes back with
+    `"public": true`, private pushes never show up.
+  - **Repository access: All repositories** (or explicitly include the
+    private repos whose activity you want to see).
+- `GITHUB_USERNAME` — required, must match the account the token belongs to.
 
 **Never** put a token in `config.js` or anything that ships to the browser —
 only in Vercel's environment variables, which the serverless function reads

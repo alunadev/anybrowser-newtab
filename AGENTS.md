@@ -100,11 +100,19 @@ access token themselves — you cannot do this step for them, and you should
 never ask them to paste a token into chat.
 
 1. Tell them to create a **fine-grained personal access token** at
-   github.com/settings/tokens — read-only, "Metadata: Read-only" scope is
-   enough for public activity (add specific repos if they want private
-   activity too).
-2. They add it as an environment variable on their Vercel project:
-   `GITHUB_TOKEN` (the token) and `GITHUB_USERNAME` (their username).
+   github.com/settings/tokens with:
+   - Repository permissions → **Metadata: Read-only**.
+   - Account permissions → **Events: Read-only** — required for private
+     activity to appear at all. This is easy to miss because it's a
+     separate "Account permissions" section, not under repository
+     permissions. Without it, the token still works but every event comes
+     back `"public": true` — private pushes silently never show up, with no
+     error to signal why.
+   - Repository access → All repositories (or explicitly include the
+     private repos they want counted).
+2. They add it as environment variables on their Vercel project:
+   `GITHUB_TOKEN` (the token) and `GITHUB_USERNAME` (their GitHub username,
+   required — must match the token's account).
 3. That's it — `api/github-stats.js` picks it up automatically, and the
    front end already tries it first with a fallback to the public API if
    it's not configured. No code changes needed.
