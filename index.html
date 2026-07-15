@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>New tab</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌙</text></svg>" />
+  <link rel="stylesheet" href="tokens.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="greeting">
+      <p class="greeting-date" id="date"></p>
+      <h1 class="greeting-title" id="greeting"></h1>
+    </header>
+
+    <div class="layout">
+      <section class="main" aria-label="GitHub activity">
+        <div class="section-header">
+          <h2 class="section-title">Shipped</h2>
+          <p class="section-meta" id="log-user"></p>
+        </div>
+
+        <img class="heatmap" id="heatmap" alt="" />
+
+        <div class="stats" id="stats"></div>
+
+        <div class="shipped-list" id="log">
+          <p class="log-empty">Loading…</p>
+        </div>
+      </section>
+
+      <aside class="sidebar" aria-label="Shortcuts">
+        <div class="section-header">
+          <h2 class="section-title">Shortcuts</h2>
+        </div>
+        <nav class="shortcuts" id="shortcuts"></nav>
+      </aside>
+    </div>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

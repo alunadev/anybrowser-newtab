@@ -1,0 +1,8 @@
+# Presence of this file stops Vercel CLI from falling back to .gitignore,
+# so config.js (gitignored on purpose, see .gitignore) still gets deployed
+# when you run `vercel --prod` from your local clone.
+
+.git
+.gitignore
+README.md
+LICENSE

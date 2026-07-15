@@ -1,0 +1,6 @@
+# Personal config — never commit your real shortcuts/GitHub username.
+# Copy config.example.js to config.js and edit that instead.
+config.js
+
+.DS_Store
+.vercel
