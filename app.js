@@ -122,100 +122,124 @@ function renderShortcuts() {
   }
 }
 
-// ---- GitHub activity → log.md entries ----
-
-const CACHE_KEY = "newtab-gh-events";
-const CACHE_TTL = 10 * 60 * 1000;
-
-// Authenticated first, via the /api/github-stats serverless function (the
-// token never reaches the browser — see api/github-stats.js). Falls back to
-// the public, unauthenticated events API when that endpoint isn't there
-// (local static preview, or a deploy without GITHUB_TOKEN configured yet).
-async function fetchViaProxy() {
-  const res = await fetch("/api/github-stats");
-  if (!res.ok) throw new Error(`proxy ${res.status}`);
-  const { events } = await res.json();
-  return events;
+function renderHeatmap() {
+  const img = document.getElementById("heatmap");
+  img.src = `https://ghchart.rshah.org/4a6fa5/${CONFIG.githubUser}`;
+  img.alt = `${CONFIG.githubUser}'s GitHub contribution graph`;
 }
 
-async function fetchPublic() {
+// ---- GitHub activity ----
+//
+// Two data sources, tried in order:
+//
+// 1. /api/github-stats — the serverless proxy (see api/github-stats.js). If
+//    GITHUB_TOKEN is configured there, this uses GitHub's Search API
+//    (commits, PRs, repos), which respects normal per-repo token
+//    permissions — a safe, read-only fine-grained token works fine here,
+//    private activity included.
+// 2. The public, unauthenticated Events API — used automatically if the
+//    proxy isn't there (local static preview, or no token configured yet).
+//    Zero setup, public activity only.
+
+const CACHE_KEY = "newtab-gh-data";
+const CACHE_TTL = 10 * 60 * 1000;
+
+async function fetchViaProxy() {
+  const res = await fetch(`/api/github-stats?days=${CONFIG.maxDays}`);
+  if (!res.ok) throw new Error(`proxy ${res.status}`);
+  const data = await res.json();
+  return { mode: "search", data };
+}
+
+async function fetchPublicEvents() {
   const res = await fetch(
     `https://api.github.com/users/${CONFIG.githubUser}/events/public?per_page=100`,
     { headers: { Accept: "application/vnd.github+json" } }
   );
   if (!res.ok) throw new Error(`GitHub API ${res.status}`);
-  return res.json();
+  const events = await res.json();
+  return { mode: "events", data: events };
 }
 
-async function fetchEvents() {
+async function fetchShipped() {
   const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
-  if (cached && Date.now() - cached.at < CACHE_TTL) return cached.events;
+  if (cached && Date.now() - cached.at < CACHE_TTL) return cached.result;
 
   try {
-    const events = await fetchViaProxy().catch(() => fetchPublic());
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), events }));
-    return events;
+    const result = await fetchViaProxy().catch(() => fetchPublicEvents());
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), result }));
+    return result;
   } catch (err) {
-    if (cached) return cached.events; // stale beats nothing
+    if (cached) return cached.result; // stale beats nothing
     throw err;
   }
 }
 
-// One log line per event; PushEvents to the same repo+branch+day are merged.
-function toEntries(events) {
-  const entries = [];
-  const pushes = new Map();
+// ---- Stats row (Open/Drafts/Merged/Closed-style cards) ----
 
-  for (const ev of events) {
-    const day = ev.created_at.slice(0, 10);
-    const repo = ev.repo.name.replace(/^.*\//, "");
-    const repoUrl = `https://github.com/${ev.repo.name}`;
+function statCell(label, value) {
+  const cell = document.createElement("div");
+  cell.className = "stat";
+  const l = document.createElement("p");
+  l.className = "stat-label";
+  l.textContent = label;
+  const v = document.createElement("p");
+  v.className = "stat-value";
+  v.textContent = String(value);
+  cell.append(l, v);
+  return cell;
+}
 
-    if (ev.type === "PushEvent") {
-      const branch = (ev.payload.ref || "").replace("refs/heads/", "");
-      const key = `${day}|${ev.repo.name}|${branch}`;
-      // The events API may omit commit counts; fall back to a countless line.
-      const size = ev.payload.size ?? ev.payload.distinct_size ?? 0;
-      const prev = pushes.get(key);
-      if (prev) {
-        prev.count += size;
-        prev.verb = prev.count ? "pushed:" : "pushed to";
-      } else {
-        const entry = {
-          day,
-          verb: size ? "pushed:" : "pushed to",
-          count: size,
-          repo,
-          detail: branch === "main" || branch === "master" ? "" : ` (${branch})`,
-          url: repoUrl,
-          sort: ev.created_at,
-        };
-        pushes.set(key, entry);
-        entries.push(entry);
-      }
-    } else if (ev.type === "PullRequestEvent") {
-      const pr = ev.payload.pull_request;
-      const action = ev.payload.action === "closed" && pr.merged ? "merged PR:" : `${ev.payload.action} PR:`;
-      entries.push({ day, verb: action, repo, detail: ` — ${pr.title}`, url: pr.html_url, sort: ev.created_at });
-    } else if (ev.type === "CreateEvent" && ev.payload.ref_type === "repository") {
-      entries.push({ day, verb: "created repo:", repo, detail: "", url: repoUrl, sort: ev.created_at });
-    } else if (ev.type === "ReleaseEvent") {
-      entries.push({ day, verb: "released:", repo, detail: ` ${ev.payload.release.tag_name}`, url: ev.payload.release.html_url, sort: ev.created_at });
-    } else if (ev.type === "IssuesEvent" && ev.payload.action === "opened") {
-      entries.push({ day, verb: "opened issue:", repo, detail: ` — ${ev.payload.issue.title}`, url: ev.payload.issue.html_url, sort: ev.created_at });
-    }
+function renderStatCells(cells) {
+  const container = document.getElementById("stats");
+  container.textContent = "";
+  const visible = cells.filter(([, value]) => value > 0);
+  // Nothing worth showing — a row of all-zero cards has no signal, hide it.
+  container.hidden = visible.length === 0;
+  for (const [label, value] of visible) container.appendChild(statCell(label, value));
+}
+
+function statsFromSearch({ commits, prs, repos }) {
+  let open = 0;
+  let draft = 0;
+  let merged = 0;
+  let closed = 0;
+  for (const pr of prs.items) {
+    if (pr.pull_request?.merged_at) merged++;
+    else if (pr.state === "closed") closed++;
+    else if (pr.draft) draft++;
+    else open++;
   }
-  return entries.sort((a, b) => b.sort.localeCompare(a.sort));
+  return [
+    ["Commits", commits.total],
+    ["Open PRs", open],
+    ["Drafts", draft],
+    ["Merged", merged],
+    ["Closed", closed],
+    ["New repos", repos.total],
+  ];
 }
 
-function kindOf(verb) {
-  if (verb.startsWith("pushed")) return "push";
-  if (verb.includes("PR")) return "pr";
-  if (verb.startsWith("opened issue")) return "issue";
-  if (verb.startsWith("released")) return "release";
-  if (verb.startsWith("created repo")) return "repo";
-  return "push";
+// Note: GitHub's public events API no longer includes a commit count on
+// PushEvent (payload.size/distinct_size come back null), so the fallback
+// counts pushes themselves rather than commits.
+function statsFromEvents(events, cutoff) {
+  const recent = events.filter((e) => e.created_at.slice(0, 10) >= cutoff);
+  const pushes = recent.filter((e) => e.type === "PushEvent").length;
+  const prsOpened = recent.filter((e) => e.type === "PullRequestEvent" && e.payload.action === "opened").length;
+  const merged = recent.filter((e) => e.type === "PullRequestEvent" && e.payload.action === "closed" && e.payload.pull_request?.merged).length;
+  const repos = recent.filter((e) => e.type === "CreateEvent" && e.payload.ref_type === "repository").length;
+  return [
+    ["Pushes", pushes],
+    ["PRs opened", prsOpened],
+    ["Merged", merged],
+    ["New repos", repos],
+  ];
 }
+
+// ---- Row list ----
+
+const MAX_ROWS = 15;
 
 function timeAgo(iso) {
   const diff = Math.max(0, Date.now() - new Date(iso).getTime());
@@ -243,100 +267,130 @@ function extLinkIcon() {
   return svg;
 }
 
-// Stat row mirrors the reference PR dashboard (Open/Drafts/Merged/Closed),
-// adapted to the events this account actually produces.
-//
-// Note: GitHub's public events API no longer includes a commit count on
-// PushEvent (payload.size/distinct_size come back null), so we count pushes
-// themselves rather than commits — anything else silently shows 0 forever.
-function renderStats(events, cutoff) {
-  const recent = events.filter((e) => e.created_at.slice(0, 10) >= cutoff);
-  const pushes = recent.filter((e) => e.type === "PushEvent").length;
-  const prsOpened = recent.filter((e) => e.type === "PullRequestEvent" && e.payload.action === "opened").length;
-  const merged = recent.filter((e) => e.type === "PullRequestEvent" && e.payload.action === "closed" && e.payload.pull_request?.merged).length;
-  const repos = recent.filter((e) => e.type === "CreateEvent" && e.payload.ref_type === "repository").length;
+function appendRow(container, row) {
+  const a = document.createElement("a");
+  a.className = "shipped-row";
+  a.href = row.url;
 
-  const container = document.getElementById("stats");
-  container.textContent = "";
+  const dot = document.createElement("span");
+  dot.className = "shipped-dot";
+  dot.dataset.kind = row.kind;
 
-  const cells = [
-    ["Pushes", pushes],
-    ["PRs opened", prsOpened],
-    ["Merged", merged],
-    ["New repos", repos],
-  ].filter(([, value]) => value > 0);
+  const body = document.createElement("div");
+  body.className = "shipped-body";
 
-  // Nothing worth showing — a row of all-zero cards has no signal, hide it.
-  container.hidden = cells.length === 0;
-  if (cells.length === 0) return;
+  const title = document.createElement("p");
+  title.className = "shipped-title";
+  title.append(`${row.verb} `);
+  if (row.count) title.append(`${row.count} commit${row.count === 1 ? "" : "s"} to `);
+  const repoSpan = document.createElement("span");
+  repoSpan.className = "repo";
+  repoSpan.textContent = row.repo;
+  title.appendChild(repoSpan);
+  if (row.detail) title.append(row.detail);
 
-  for (const [label, value] of cells) {
-    const cell = document.createElement("div");
-    cell.className = "stat";
-    const l = document.createElement("p");
-    l.className = "stat-label";
-    l.textContent = label;
-    const v = document.createElement("p");
-    v.className = "stat-value";
-    v.textContent = String(value);
-    cell.append(l, v);
-    container.appendChild(cell);
-  }
+  const meta = document.createElement("p");
+  meta.className = "shipped-meta";
+  meta.textContent = `Updated ${timeAgo(row.sort)}`;
+
+  body.append(title, meta);
+  a.append(dot, body, extLinkIcon());
+  container.appendChild(a);
 }
 
-function renderHeatmap() {
-  const img = document.getElementById("heatmap");
-  img.src = `https://ghchart.rshah.org/4a6fa5/${CONFIG.githubUser}`;
-  img.alt = `${CONFIG.githubUser}'s GitHub contribution graph`;
-}
-
-const MAX_ROWS = 15;
-
-function renderLog(entries) {
+function renderRows(rows) {
   const log = document.getElementById("log");
   log.textContent = "";
 
-  const cutoff = new Date(Date.now() - CONFIG.maxDays * 86400000).toISOString().slice(0, 10);
-  const recent = entries.filter((e) => e.day >= cutoff).slice(0, MAX_ROWS);
-
-  if (!recent.length) {
+  if (!rows.length) {
     const p = document.createElement("p");
     p.className = "log-empty";
-    p.textContent = `No public activity in the last ${CONFIG.maxDays} days. Ship something.`;
+    p.textContent = `No activity in the last ${CONFIG.maxDays} days. Ship something.`;
     log.appendChild(p);
     return;
   }
 
-  for (const e of recent) {
-    const a = document.createElement("a");
-    a.className = "shipped-row";
-    a.href = e.url;
+  for (const row of rows.slice(0, MAX_ROWS)) appendRow(log, row);
+}
 
-    const dot = document.createElement("span");
-    dot.className = "shipped-dot";
-    dot.dataset.kind = kindOf(e.verb);
+function rowsFromSearch({ commits, prs }) {
+  const rows = [];
 
-    const body = document.createElement("div");
-    body.className = "shipped-body";
-
-    const title = document.createElement("p");
-    title.className = "shipped-title";
-    title.append(`${e.verb} `);
-    if (e.count) title.append(`${e.count} commit${e.count === 1 ? "" : "s"} to `);
-    const repoSpan = document.createElement("span");
-    repoSpan.className = "repo";
-    repoSpan.textContent = e.repo;
-    title.appendChild(repoSpan);
-    if (e.detail) title.append(e.detail);
-
-    const meta = document.createElement("p");
-    meta.className = "shipped-meta";
-    meta.textContent = `Updated ${timeAgo(e.sort)}`;
-
-    body.append(title, meta);
-    a.append(dot, body, extLinkIcon());
-    log.appendChild(a);
+  for (const c of commits.items) {
+    const repo = c.repository?.full_name?.split("/")[1] || "repo";
+    const message = (c.commit?.message || "").split("\n")[0];
+    rows.push({
+      verb: "committed:",
+      repo,
+      detail: ` — ${message}`,
+      url: c.html_url,
+      sort: c.commit?.author?.date || c.commit?.committer?.date,
+      kind: "commit",
+    });
   }
+
+  for (const pr of prs.items) {
+    const repo = (pr.repository_url || "").split("/").pop() || "repo";
+    const verb = pr.pull_request?.merged_at
+      ? "merged PR:"
+      : pr.state === "closed"
+        ? "closed PR:"
+        : pr.draft
+          ? "draft PR:"
+          : "open PR:";
+    rows.push({ verb, repo, detail: ` — ${pr.title}`, url: pr.html_url, sort: pr.updated_at, kind: "pr" });
+  }
+
+  return rows.sort((a, b) => b.sort.localeCompare(a.sort));
+}
+
+// One log line per event; PushEvents to the same repo+branch+day are merged.
+function rowsFromEvents(events, cutoff) {
+  const rows = [];
+  const pushes = new Map();
+
+  for (const ev of events) {
+    const day = ev.created_at.slice(0, 10);
+    if (day < cutoff) continue;
+
+    const repo = ev.repo.name.replace(/^.*\//, "");
+    const repoUrl = `https://github.com/${ev.repo.name}`;
+
+    if (ev.type === "PushEvent") {
+      const branch = (ev.payload.ref || "").replace("refs/heads/", "");
+      const key = `${day}|${ev.repo.name}|${branch}`;
+      const size = ev.payload.size ?? ev.payload.distinct_size ?? 0;
+      const prev = pushes.get(key);
+      if (prev) {
+        prev.count += size;
+        prev.verb = prev.count ? "pushed:" : "pushed to";
+      } else {
+        const row = {
+          verb: size ? "pushed:" : "pushed to",
+          count: size,
+          repo,
+          detail: branch === "main" || branch === "master" ? "" : ` (${branch})`,
+          url: repoUrl,
+          sort: ev.created_at,
+          kind: "commit",
+        };
+        pushes.set(key, row);
+        rows.push(row);
+      }
+    } else if (ev.type === "PullRequestEvent") {
+      const pr = ev.payload.pull_request;
+      const verb = ev.payload.action === "closed" && pr.merged ? "merged PR:" : `${ev.payload.action} PR:`;
+      rows.push({ verb, repo, detail: ` — ${pr.title}`, url: pr.html_url, sort: ev.created_at, kind: "pr" });
+    } else if (ev.type === "CreateEvent" && ev.payload.ref_type === "repository") {
+      rows.push({ verb: "created repo:", repo, detail: "", url: repoUrl, sort: ev.created_at, kind: "repo" });
+    } else if (ev.type === "ReleaseEvent") {
+      rows.push({ verb: "released:", repo, detail: ` ${ev.payload.release.tag_name}`, url: ev.payload.release.html_url, sort: ev.created_at, kind: "release" });
+    } else if (ev.type === "IssuesEvent" && ev.payload.action === "opened") {
+      rows.push({ verb: "opened issue:", repo, detail: ` — ${ev.payload.issue.title}`, url: ev.payload.issue.html_url, sort: ev.created_at, kind: "issue" });
+    }
+  }
+
+  return rows.sort((a, b) => b.sort.localeCompare(a.sort));
 }
 
 async function init() {
@@ -344,11 +398,17 @@ async function init() {
   renderShortcuts();
   renderHeatmap();
   document.getElementById("log-user").textContent = `@${CONFIG.githubUser} · last ${CONFIG.maxDays} days`;
+
   try {
-    const events = await fetchEvents();
-    const cutoff = new Date(Date.now() - CONFIG.maxDays * 86400000).toISOString().slice(0, 10);
-    renderStats(events, cutoff);
-    renderLog(toEntries(events));
+    const { mode, data } = await fetchShipped();
+    if (mode === "search") {
+      renderStatCells(statsFromSearch(data));
+      renderRows(rowsFromSearch(data));
+    } else {
+      const cutoff = new Date(Date.now() - CONFIG.maxDays * 86400000).toISOString().slice(0, 10);
+      renderStatCells(statsFromEvents(data, cutoff));
+      renderRows(rowsFromEvents(data, cutoff));
+    }
   } catch (err) {
     const p = document.createElement("p");
     p.className = "log-error";

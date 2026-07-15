@@ -249,7 +249,7 @@ a {
   background: var(--color-muted);
 }
 
-.shipped-dot[data-kind="push"] { background: #4a6fa5; }
+.shipped-dot[data-kind="commit"] { background: #4a6fa5; }
 .shipped-dot[data-kind="pr"] { background: #8250df; }
 .shipped-dot[data-kind="issue"] { background: #3fb950; }
 .shipped-dot[data-kind="release"] { background: #d29922; }

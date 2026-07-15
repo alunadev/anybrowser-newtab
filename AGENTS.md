@@ -99,26 +99,27 @@ surface private-repo activity. It requires them to create a GitHub personal
 access token themselves — you cannot do this step for them, and you should
 never ask them to paste a token into chat.
 
-1. Tell them to create a **classic personal access token** (not
-   fine-grained) at github.com/settings/tokens/new with the **`repo`**
-   scope. Fine-grained tokens cannot do this — there's no fine-grained
-   permission that unlocks private events on `GET /users/{username}/events`
-   (GitHub's own docs mention an "Events" user permission for this endpoint,
-   but it doesn't actually exist in the fine-grained permission system —
-   confirmed against GitHub's docs, "Events" only exists as an
-   organization-level permission for a different endpoint). Without the
-   right token type, requests still succeed with no error — every event
-   just comes back `"public": true`, private activity silently missing.
-   Tell the user plainly: classic `repo` scope grants read *and* write to
-   their repos (no read-only option exists for classic scopes) — let them
-   decide if that trade-off is acceptable before creating it. The token
-   only lives in Vercel's env vars, never reaches the browser.
+1. Tell them to create a **fine-grained personal access token** at
+   github.com/settings/tokens?type=beta with, under Repository permissions:
+   - **Contents: Read-only** (lets the token read commits)
+   - **Pull requests: Read-only** (lets the token read PR data)
+   - **Repository access**: the private repos they want counted, or "All
+     repositories"
+
+   This works because `api/github-stats.js` calls GitHub's Search API
+   (commits, PRs, repos), not the Events feed — Search respects normal
+   per-repo fine-grained permissions, unlike `GET /users/{username}/events`
+   (which has no fine-grained permission that unlocks private activity at
+   all — don't try fixing that endpoint's private-activity gap with a
+   fine-grained token, it structurally can't work; this is why the app uses
+   Search instead). A plain **read-only** fine-grained token is genuinely
+   enough — no need for a broader classic token.
 2. They add it as environment variables on their Vercel project:
    `GITHUB_TOKEN` (the token) and `GITHUB_USERNAME` (their GitHub username,
    required — must match the token's account).
 3. That's it — `api/github-stats.js` picks it up automatically, and the
-   front end already tries it first with a fallback to the public API if
-   it's not configured. No code changes needed.
+   front end already tries it first with a fallback to the public Events API
+   if it's not configured. No code changes needed.
 
 ## Step 6 — Point their browser at it
 

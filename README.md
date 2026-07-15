@@ -105,44 +105,45 @@ this on a public fork — your `config.js` would be visible to anyone.
 By default, GitHub activity comes from the public, unauthenticated Events
 API — no setup needed, and it's plenty for personal use.
 
-If you want higher rate limits, `api/github-stats.js` is a Vercel serverless
-function that proxies GitHub with a token that never reaches the browser. Set
-these on your Vercel project (Settings → Environment Variables):
+If you want private-repo activity to show up too (or just higher rate
+limits), `api/github-stats.js` is a Vercel serverless function that proxies
+GitHub's Search API with a token that never reaches the browser. Set these
+on your Vercel project (Settings → Environment Variables):
 
-- `GITHUB_TOKEN` — a **classic** [personal access
-  token](https://github.com/settings/tokens) (not fine-grained) with the
-  `repo` scope.
+- `GITHUB_TOKEN` — a [fine-grained personal access
+  token](https://github.com/settings/tokens?type=beta), read-only. Grant:
+  - **Repository permissions → Contents: Read-only** (lets the token read
+    commits).
+  - **Repository permissions → Pull requests: Read-only** (lets the token
+    read PR data).
+  - **Repository access**: the specific private repos you want counted, or
+    "All repositories".
 - `GITHUB_USERNAME` — required, must match the account the token belongs to.
 
-**Why classic, not fine-grained?** Fine-grained PATs cannot unlock private
-activity on this endpoint at all — there's no fine-grained permission that
-does it. GitHub's own docs for `GET /users/{username}/events` mention an
-"Events" user permission, but it doesn't actually exist in the fine-grained
-permission system (it only exists as an *organization*-level permission for
-an unrelated endpoint). Without the right access, the token still works —
-you just silently get public events only, no error. A classic token with
-`repo` scope is the only way to surface private-repo activity here.
-
-**Trade-off to weigh**: classic scopes are all-or-nothing — `repo` grants
-read *and* write to every repo (public and private) the token's owner can
-access, there's no read-only classic scope. Since the token only lives in
-Vercel's environment variables (read server-side by the function, never sent
-to the browser), the practical exposure is tied to the security of your
-Vercel account itself, not to this app. If you're not comfortable with that
-trade-off, skip this section — the page works great on public activity alone.
+**Why this works with fine-grained tokens (and the old approach didn't):**
+an earlier version of this app used GitHub's Events feed
+(`GET /users/{username}/events`), which has no fine-grained permission that
+can unlock private activity at all — its own docs mention an "Events" user
+permission that doesn't actually exist in the fine-grained system (it's only
+an *organization*-level permission for an unrelated endpoint). Switching to
+the Search API (commits, PRs, repos) sidesteps that entirely: Search respects
+normal per-repo permissions, so a properly-scoped **read-only** fine-grained
+token just works — no need for a broader classic token.
 
 **Never** put a token in `config.js` or anything that ships to the browser —
 only in Vercel's environment variables, which the serverless function reads
 server-side. Without it configured, the page still works: it automatically
-falls back to the public API.
+falls back to the public Events API (public activity only).
 
 ## Notes and limitations
 
-- GitHub's public Events API no longer returns a commit count on push events
-  (a 2024 privacy change, true whether you're authenticated or not) — the
-  "Pushes" stat counts push events, not individual commits.
-- Only the last ~90 days / 300 events of activity are available from GitHub's
-  Events API, regardless of `maxDays`.
+- The public (unauthenticated) fallback path counts push events, not
+  individual commits — GitHub's Events API no longer returns a commit count
+  on push events (a 2024 privacy change). The authenticated Search API path
+  doesn't have this limitation; it counts real commits.
+- GitHub's Search API has its own rate limit (30 requests/min authenticated,
+  10/min unauthenticated) — plenty for a new-tab page, but worth knowing if
+  you're debugging.
 - The contribution heatmap is rendered via the free
   [ghchart.rshah.org](https://github.com/2016rshah/githubchart-api) image
   service — a third-party dependency with no auth required. Swap it for
