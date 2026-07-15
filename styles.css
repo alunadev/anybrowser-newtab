@@ -329,14 +329,15 @@ a {
   stroke-linejoin: round;
 }
 
-.shipped-icon[data-kind="commit"] { color: #4a6fa5; }
-.shipped-icon[data-kind="pr-open"] { color: #3fb950; }
-.shipped-icon[data-kind="pr-draft"] { color: var(--color-muted); }
-.shipped-icon[data-kind="pr-merged"] { color: #8250df; }
-.shipped-icon[data-kind="pr-closed"] { color: #f85149; }
-.shipped-icon[data-kind="issue"] { color: #3fb950; }
-.shipped-icon[data-kind="release"] { color: #d29922; }
-.shipped-icon[data-kind="repo"] { color: var(--color-muted); }
+/* GitHub's own semantic state colors (Primer tokens) — no invented hues. */
+.shipped-icon[data-kind="commit"] { color: var(--gh-muted); }
+.shipped-icon[data-kind="pr-open"] { color: var(--gh-success); }
+.shipped-icon[data-kind="pr-draft"] { color: var(--gh-muted); }
+.shipped-icon[data-kind="pr-merged"] { color: var(--gh-done); }
+.shipped-icon[data-kind="pr-closed"] { color: var(--gh-danger); }
+.shipped-icon[data-kind="issue"] { color: var(--gh-success); }
+.shipped-icon[data-kind="release"] { color: var(--gh-muted); }
+.shipped-icon[data-kind="repo"] { color: var(--gh-muted); }
 
 .shipped-icon[data-dashed="true"] {
   stroke-dasharray: 2.5 2.5;
