@@ -360,7 +360,7 @@ function statsFromEvents(events, cutoff) {
 
 // ---- Row list ----
 
-const MAX_ROWS = 10;
+const MAX_ROWS = 5;
 
 function timeAgo(iso) {
   const diff = Math.max(0, Date.now() - new Date(iso).getTime());
@@ -588,7 +588,7 @@ async function init() {
   renderGreeting();
   renderShortcuts();
   renderHeatmap();
-  document.getElementById("log-user").textContent = `@${CONFIG.githubUser} · last ${CONFIG.maxDays} days`;
+  document.getElementById("log-user").textContent = `@${CONFIG.githubUser} · recent activity`;
 
   try {
     const { mode, data } = await fetchShipped();
