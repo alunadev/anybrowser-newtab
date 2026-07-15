@@ -239,7 +239,7 @@ function statsFromEvents(events, cutoff) {
 
 // ---- Row list ----
 
-const MAX_ROWS = 15;
+const MAX_ROWS = 10;
 
 function timeAgo(iso) {
   const diff = Math.max(0, Date.now() - new Date(iso).getTime());
