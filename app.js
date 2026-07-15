@@ -267,14 +267,74 @@ function extLinkIcon() {
   return svg;
 }
 
+// Row-kind icons — same visual language GitHub itself uses for PR state
+// (git-pull-request / git-merge / closed / draft), plus a commit dot and a
+// few generic shapes for the event-feed fallback's extra row types.
+const ROW_ICONS = {
+  commit: { circles: [{ cx: 12, cy: 12, r: 3 }], paths: ["M3 12h6", "M15 12h6"] },
+  "pr-open": {
+    circles: [
+      { cx: 18, cy: 18, r: 3 },
+      { cx: 6, cy: 6, r: 3 },
+    ],
+    paths: ["M13 6h3a2 2 0 0 1 2 2v7", "M6 9v12"],
+  },
+  "pr-draft": {
+    circles: [
+      { cx: 18, cy: 18, r: 3 },
+      { cx: 6, cy: 6, r: 3 },
+    ],
+    paths: ["M13 6h3a2 2 0 0 1 2 2v7", "M6 9v12"],
+    dashed: true,
+  },
+  "pr-merged": {
+    circles: [
+      { cx: 18, cy: 18, r: 3 },
+      { cx: 6, cy: 6, r: 3 },
+    ],
+    paths: ["M6 21V9a9 9 0 0 0 9 9"],
+  },
+  "pr-closed": {
+    circles: [
+      { cx: 6, cy: 6, r: 3 },
+      { cx: 18, cy: 18, r: 3 },
+    ],
+    paths: ["M6 9v12", "m21 3-6 6", "m15 3 6 6"],
+  },
+  issue: { circles: [{ cx: 12, cy: 12, r: 8 }], paths: ["M12 8v4", "M12 15.5v.01"] },
+  repo: { paths: ["M4 7V5a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"] },
+  release: { circles: [{ cx: 7.5, cy: 7.5, r: 1.2 }], paths: ["M12 2H2v10l9.29 9.29a1 1 0 0 0 1.42 0l7.29-7.29a1 1 0 0 0 0-1.42Z"] },
+};
+
+function rowIcon(kind) {
+  const spec = ROW_ICONS[kind] || ROW_ICONS.commit;
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("class", "shipped-icon");
+  svg.dataset.kind = kind;
+  if (spec.dashed) svg.dataset.dashed = "true";
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+
+  for (const c of spec.circles || []) {
+    const circle = document.createElementNS(ns, "circle");
+    circle.setAttribute("cx", c.cx);
+    circle.setAttribute("cy", c.cy);
+    circle.setAttribute("r", c.r);
+    svg.appendChild(circle);
+  }
+  for (const d of spec.paths || []) {
+    const path = document.createElementNS(ns, "path");
+    path.setAttribute("d", d);
+    svg.appendChild(path);
+  }
+  return svg;
+}
+
 function appendRow(container, row) {
   const a = document.createElement("a");
   a.className = "shipped-row";
   a.href = row.url;
-
-  const dot = document.createElement("span");
-  dot.className = "shipped-dot";
-  dot.dataset.kind = row.kind;
 
   const body = document.createElement("div");
   body.className = "shipped-body";
@@ -294,7 +354,7 @@ function appendRow(container, row) {
   meta.textContent = `Updated ${timeAgo(row.sort)}`;
 
   body.append(title, meta);
-  a.append(dot, body, extLinkIcon());
+  a.append(rowIcon(row.kind), body, extLinkIcon());
   container.appendChild(a);
 }
 
@@ -331,14 +391,15 @@ function rowsFromSearch({ commits, prs }) {
 
   for (const pr of prs.items) {
     const repo = (pr.repository_url || "").split("/").pop() || "repo";
-    const verb = pr.pull_request?.merged_at
-      ? "merged PR:"
+    const kind = pr.pull_request?.merged_at
+      ? "pr-merged"
       : pr.state === "closed"
-        ? "closed PR:"
+        ? "pr-closed"
         : pr.draft
-          ? "draft PR:"
-          : "open PR:";
-    rows.push({ verb, repo, detail: ` — ${pr.title}`, url: pr.html_url, sort: pr.updated_at, kind: "pr" });
+          ? "pr-draft"
+          : "pr-open";
+    const verb = { "pr-merged": "merged PR:", "pr-closed": "closed PR:", "pr-draft": "draft PR:", "pr-open": "open PR:" }[kind];
+    rows.push({ verb, repo, detail: ` — ${pr.title}`, url: pr.html_url, sort: pr.updated_at, kind });
   }
 
   return rows.sort((a, b) => b.sort.localeCompare(a.sort));
@@ -379,8 +440,16 @@ function rowsFromEvents(events, cutoff) {
       }
     } else if (ev.type === "PullRequestEvent") {
       const pr = ev.payload.pull_request;
-      const verb = ev.payload.action === "closed" && pr.merged ? "merged PR:" : `${ev.payload.action} PR:`;
-      rows.push({ verb, repo, detail: ` — ${pr.title}`, url: pr.html_url, sort: ev.created_at, kind: "pr" });
+      const kind =
+        ev.payload.action === "closed" && pr.merged
+          ? "pr-merged"
+          : ev.payload.action === "closed"
+            ? "pr-closed"
+            : pr.draft
+              ? "pr-draft"
+              : "pr-open";
+      const verb = kind === "pr-merged" ? "merged PR:" : kind === "pr-closed" ? "closed PR:" : `${ev.payload.action} PR:`;
+      rows.push({ verb, repo, detail: ` — ${pr.title}`, url: pr.html_url, sort: ev.created_at, kind });
     } else if (ev.type === "CreateEvent" && ev.payload.ref_type === "repository") {
       rows.push({ verb: "created repo:", repo, detail: "", url: repoUrl, sort: ev.created_at, kind: "repo" });
     } else if (ev.type === "ReleaseEvent") {

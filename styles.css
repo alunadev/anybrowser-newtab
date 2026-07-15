@@ -240,20 +240,31 @@ a {
   background: var(--color-accent-soft);
 }
 
-.shipped-dot {
+/* Row-kind icons — same visual language GitHub itself uses for PR state. */
+.shipped-icon {
   flex-shrink: 0;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  margin-top: 0.5rem;
-  background: var(--color-muted);
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.125rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-.shipped-dot[data-kind="commit"] { background: #4a6fa5; }
-.shipped-dot[data-kind="pr"] { background: #8250df; }
-.shipped-dot[data-kind="issue"] { background: #3fb950; }
-.shipped-dot[data-kind="release"] { background: #d29922; }
-.shipped-dot[data-kind="repo"] { background: var(--color-muted); }
+.shipped-icon[data-kind="commit"] { color: #4a6fa5; }
+.shipped-icon[data-kind="pr-open"] { color: #3fb950; }
+.shipped-icon[data-kind="pr-draft"] { color: var(--color-muted); }
+.shipped-icon[data-kind="pr-merged"] { color: #8250df; }
+.shipped-icon[data-kind="pr-closed"] { color: #f85149; }
+.shipped-icon[data-kind="issue"] { color: #3fb950; }
+.shipped-icon[data-kind="release"] { color: #d29922; }
+.shipped-icon[data-kind="repo"] { color: var(--color-muted); }
+
+.shipped-icon[data-dashed="true"] {
+  stroke-dasharray: 2.5 2.5;
+}
 
 .shipped-body {
   flex: 1;
