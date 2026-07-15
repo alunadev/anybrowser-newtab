@@ -36,56 +36,13 @@ a {
   padding: var(--space-8) var(--gap-h) var(--space-7);
 }
 
-/* ---- Search bar ----
-   The new-tab override replaces the browser's own omnibox landing behavior,
-   so this recreates "open a tab, start typing" as the default action. */
-
-.search-form {
-  position: relative;
-  max-width: 34rem;
-  margin: 0 auto var(--space-8);
-}
-
-.search-icon {
-  position: absolute;
-  left: var(--space-4);
-  top: 50%;
-  transform: translateY(-50%);
-  width: 1.125rem;
-  height: 1.125rem;
-  fill: none;
-  stroke: var(--color-muted);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  pointer-events: none;
-}
-
-.search-input {
-  width: 100%;
-  padding: var(--space-4) var(--space-4) var(--space-4) var(--space-8);
-  font-family: inherit;
-  font-size: var(--text-base);
-  color: var(--color-ink);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  transition: border-color 120ms ease, box-shadow 120ms ease;
-}
-
-.search-input::placeholder {
-  color: var(--color-muted);
-}
-
-.search-input:focus-visible {
-  outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px var(--color-accent-soft);
-}
-
 /* ---- Greeting ---- */
 
 .greeting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
   margin-bottom: var(--space-7);
 }
 
@@ -121,6 +78,54 @@ a {
 
 .moon-lit {
   fill: var(--color-ink);
+}
+
+/* ---- Search bar ----
+   Minimal, right-aligned next to the greeting — restores "open a tab, start
+   typing" now that the browser's own omnibox landing is overridden, without
+   competing visually with the greeting itself. */
+
+.search-form {
+  position: relative;
+  flex-shrink: 0;
+  width: 13rem;
+}
+
+.search-icon {
+  position: absolute;
+  left: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0.875rem;
+  height: 0.875rem;
+  fill: none;
+  stroke: var(--color-muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-6);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.search-input::placeholder {
+  color: var(--color-muted);
+}
+
+.search-input:focus-visible {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-soft);
 }
 
 /* ---- Two-column layout: desktop only ---- */
@@ -424,5 +429,14 @@ a {
 
   .greeting-title {
     font-size: var(--text-lg);
+  }
+
+  .greeting {
+    flex-wrap: wrap;
+  }
+
+  .search-form {
+    width: 100%;
+    order: 3;
   }
 }
