@@ -103,9 +103,14 @@ function renderGreeting() {
   title.appendChild(moon);
 }
 
+// Alt (⌥) on Mac, Ctrl elsewhere. Only the first 9 shortcuts get a hotkey —
+// there's no single-digit key past 9.
+const IS_MAC = /Mac|iPod|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+const HOTKEY_LABEL = IS_MAC ? "⌥" : "Ctrl";
+
 function renderShortcuts() {
   const row = document.getElementById("shortcuts");
-  for (const s of CONFIG.shortcuts) {
+  CONFIG.shortcuts.forEach((s, i) => {
     const a = document.createElement("a");
     a.className = "shortcut";
     a.href = s.url;
@@ -118,8 +123,34 @@ function renderShortcuts() {
     svg.appendChild(path);
     a.appendChild(svg);
     a.appendChild(document.createTextNode(s.label));
+
+    if (i < 9) {
+      const key = document.createElement("span");
+      key.className = "shortcut-key";
+      key.textContent = `${HOTKEY_LABEL}${i + 1}`;
+      a.appendChild(key);
+    }
+
     row.appendChild(a);
-  }
+  });
+}
+
+// Global hotkeys: Option+1..9 (Mac) / Ctrl+1..9 (elsewhere) jump straight to
+// the matching shortcut. Uses e.code (physical key), not e.key, since Option
+// remaps what character digits produce on Mac keyboard layouts.
+// Note: on Windows, Chrome/Firefox already reserve Ctrl+1..8 for switching
+// browser tabs, and Ctrl+9 for the last tab — those browsers will intercept
+// the combo before this page ever sees it.
+function initShortcutHotkeys() {
+  document.addEventListener("keydown", (e) => {
+    if (!(e.altKey || e.ctrlKey) || e.metaKey) return;
+    const match = e.code.match(/^Digit([1-9])$/);
+    if (!match) return;
+    const shortcut = CONFIG.shortcuts[Number(match[1]) - 1];
+    if (!shortcut) return;
+    e.preventDefault();
+    window.location.href = shortcut.url;
+  });
 }
 
 // Builds our own SVG from GitHub's real per-day contribution levels (see
@@ -587,8 +618,9 @@ async function init() {
   initSearch();
   renderGreeting();
   renderShortcuts();
+  initShortcutHotkeys();
   renderHeatmap();
-  document.getElementById("log-user").textContent = `@${CONFIG.githubUser} · recent activity`;
+  document.getElementById("log-user").textContent = `@${CONFIG.githubUser} · last year activity`;
 
   try {
     const { mode, data } = await fetchShipped();
