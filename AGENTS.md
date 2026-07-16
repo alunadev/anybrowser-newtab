@@ -6,10 +6,13 @@ about 5 minutes of back-and-forth with the user.
 
 ## What this project is
 
-A static (no build step) personal new-tab page: a GitHub activity feed
-rendered as a changelog, plus a row of shortcut links. Everything the user
-will ever want to change lives in one file, `config.js` (copied from
-`config.example.js`).
+A static (no build step) personal new-tab page: a search bar, a greeting, a
+GitHub "Shipped" activity feed (real contribution heatmap + stats + recent
+items), and a row of shortcut links — the first 9 of which get a real
+keyboard hotkey (`Option+1..9` on Mac, `Ctrl+1..9` elsewhere; `Option+K` /
+`Ctrl+K` focuses the search bar). The search bar and hotkeys need no
+configuration — they just work. Everything the user will ever want to
+change lives in one file, `config.js` (copied from `config.example.js`).
 
 ## Step 1 — Interview the user
 
@@ -63,7 +66,9 @@ python3 -m http.server 4173
 
 Open `http://localhost:4173` (or use your own preview/browser tooling) and
 confirm with the user: does the greeting show their name, do the shortcuts
-look right, does the GitHub activity load? Fix anything before moving on.
+look right (and their hotkey numbers match the order they wanted), does the
+GitHub activity load, does the search bar work? Fix anything before moving
+on.
 
 ## Step 4 — Deploy (if the user wants it live today)
 

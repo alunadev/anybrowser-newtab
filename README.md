@@ -20,10 +20,12 @@ Point any browser's new-tab page at your deployed URL and you're done.
   the browser's own new-tab landing is overridden. `Option+K` (Mac) /
   `Ctrl+K` (elsewhere) refocuses it from anywhere on the page.
 - **Shipped** — your real GitHub contribution graph (same per-day data as
-  your profile page, not an approximation), a stat row (commits, PRs
-  opened/drafted/merged/closed, new repos — zero-value cards hide
-  themselves), and a list of your most recent activity with relative
-  timestamps and GitHub-style state icons.
+  your profile page, not an approximation — always a full year, regardless
+  of `maxDays`), a stat row, and a list of recent activity with relative
+  timestamps and GitHub-style state icons. Out of the box (no token) this
+  reads the public Events API — pushes, PRs opened, merged, new repos. With
+  the optional token below, it switches to the Search API for a richer,
+  more accurate breakdown (real commits, open/draft/merged/closed PRs).
 - **Shortcuts** — a configurable grid of links with official brand icons
   (GitHub, Gmail, Google Calendar, Notion, LinkedIn, X, or any URL via a
   generic globe icon), muted by default and tinted with the real brand color
@@ -68,7 +70,7 @@ git history — even in your own fork):
 | ------------ | -------------------------------------------------------------------- |
 | `name`       | Used in the greeting: "Good morning, `<name>`".                      |
 | `githubUser` | Your GitHub username. Powers the entire "Shipped" section.           |
-| `maxDays`    | How many days of activity to summarize (default `7`).                |
+| `maxDays`    | How many days back the stats/recent-activity list look (default `7`). Doesn't affect the heatmap, which always shows a full year. |
 | `shortcuts`  | Array of `{ label, url, icon }`. Order in the array = display order. |
 
 Available `icon` values: `github`, `notion`, `gmail`, `gcal`, `linkedin`, `x`,
@@ -163,6 +165,12 @@ falls back to the public Events API (public activity only).
   private contributions included, enable "Include private contributions on
   my profile" in your GitHub account settings — the graph (and this heatmap)
   will then reflect it.
+- The recent-activity list caps at 5 items regardless of how much happened
+  in the `maxDays` window — it's meant to be a glance, not a full log.
+- The "Shipped" section header always reads "last year activity" (matching
+  the heatmap above it), even though the stat row and recent-activity list
+  below it are windowed to `maxDays` — the header describes the heatmap, not
+  the whole section.
 - The page sets `<meta name="robots" content="noindex, nofollow">` since it's
   meant to be a personal, unlisted URL rather than a discoverable page.
 

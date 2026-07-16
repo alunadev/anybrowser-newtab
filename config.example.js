@@ -14,7 +14,9 @@ const CONFIG = {
   // "Shipped" section (contribution heatmap, stats, recent pushes/PRs).
   githubUser: "octocat",
 
-  // How many days of GitHub activity to summarize in "Shipped".
+  // How many days back the stats row and recent-activity list look — NOT
+  // the heatmap above them, which always shows a full year (that's what
+  // GitHub's own contribution graph shows, independent of this setting).
   maxDays: 7,
 
   // Shortcuts row. Order here is display order.

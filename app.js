@@ -1,4 +1,5 @@
-// newtab — greeting, shortcuts, GitHub activity rendered as log.md entries.
+// newtab — search bar, greeting, keyboard-driven shortcuts, and a GitHub
+// "Shipped" activity feed (real contribution heatmap + stats + recent items).
 
 // Official brand glyph paths (24x24), monochrome. Generic icons only for non-brands.
 const ICONS = {
