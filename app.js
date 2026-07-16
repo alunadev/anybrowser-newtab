@@ -136,14 +136,24 @@ function renderShortcuts() {
 }
 
 // Global hotkeys: Option+1..9 (Mac) / Ctrl+1..9 (elsewhere) jump straight to
-// the matching shortcut. Uses e.code (physical key), not e.key, since Option
-// remaps what character digits produce on Mac keyboard layouts.
+// the matching shortcut; Option+K / Ctrl+K focuses the search bar. Uses
+// e.code (physical key), not e.key, since Option remaps what character
+// digits (and letters) produce on Mac keyboard layouts.
 // Note: on Windows, Chrome/Firefox already reserve Ctrl+1..8 for switching
-// browser tabs, and Ctrl+9 for the last tab — those browsers will intercept
-// the combo before this page ever sees it.
+// browser tabs (Ctrl+9 for the last tab) and Ctrl+K for the omnibox search —
+// those browsers will intercept the combo before this page ever sees it.
 function initShortcutHotkeys() {
   document.addEventListener("keydown", (e) => {
     if (!(e.altKey || e.ctrlKey) || e.metaKey) return;
+
+    if (e.code === "KeyK") {
+      e.preventDefault();
+      const input = document.getElementById("search-input");
+      input.focus();
+      input.select();
+      return;
+    }
+
     const match = e.code.match(/^Digit([1-9])$/);
     if (!match) return;
     const shortcut = CONFIG.shortcuts[Number(match[1]) - 1];
@@ -267,6 +277,11 @@ function initSearch() {
   const form = document.getElementById("search-form");
   const input = document.getElementById("search-input");
   input.focus();
+
+  const hint = document.createElement("span");
+  hint.className = "search-hint";
+  hint.textContent = `${HOTKEY_LABEL}K`;
+  form.appendChild(hint);
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
