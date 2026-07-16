@@ -26,7 +26,8 @@ Point any browser's new-tab page at your deployed URL and you're done.
 - **Shortcuts** — a configurable grid of links with official brand icons
   (GitHub, Gmail, Google Calendar, Notion, LinkedIn, X, or any URL via a
   generic globe icon), muted by default and tinted with the real brand color
-  on hover.
+  on hover. The first 9 each get a real keyboard hotkey — `Option+1..9` on
+  Mac, `Ctrl+1..9` elsewhere — shown right-aligned on the card.
 - **Greeting** — time-of-day message plus a small SVG moon-phase indicator,
   because why not.
 - **Light/dark** — follows the OS/browser color scheme automatically, no
