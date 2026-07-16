@@ -31,10 +31,11 @@ module.exports = async function handler(req, res) {
     `https://api.github.com/search/${endpoint}?q=${encodeURIComponent(q)}&per_page=50${sort ? `&sort=${sort}&order=desc` : ""}`;
 
   try {
+    const signal = AbortSignal.timeout(10000);
     const [commitsRes, prsRes, reposRes] = await Promise.all([
-      fetch(searchUrl("commits", `author:${username} author-date:>=${since}`, "author-date"), { headers }),
-      fetch(searchUrl("issues", `author:${username} type:pr updated:>=${since}`, "updated"), { headers }),
-      fetch(searchUrl("repositories", `user:${username} created:>=${since}`), { headers }),
+      fetch(searchUrl("commits", `author:${username} author-date:>=${since}`, "author-date"), { headers, signal }),
+      fetch(searchUrl("issues", `author:${username} type:pr updated:>=${since}`, "updated"), { headers, signal }),
+      fetch(searchUrl("repositories", `user:${username} created:>=${since}`), { headers, signal }),
     ]);
 
     for (const r of [commitsRes, prsRes, reposRes]) {

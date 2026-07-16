@@ -16,7 +16,9 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const ghRes = await fetch(`https://github.com/users/${username}/contributions`);
+    const ghRes = await fetch(`https://github.com/users/${username}/contributions`, {
+      signal: AbortSignal.timeout(10000),
+    });
     if (!ghRes.ok) {
       res.status(ghRes.status).json({ error: `GitHub responded ${ghRes.status}` });
       return;

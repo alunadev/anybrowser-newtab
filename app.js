@@ -174,6 +174,8 @@ function buildHeatmapSvg(days) {
   const originX = 24;
   const originY = 14;
 
+  if (!days.length) throw new Error("no contribution data");
+
   const parsed = days.map((d) => ({ ...d, dateObj: new Date(`${d.date}T00:00:00Z`) }));
   const minDate = new Date(Math.min(...parsed.map((d) => d.dateObj.getTime())));
   const weekStart = new Date(minDate);
@@ -245,14 +247,50 @@ function buildHeatmapSvg(days) {
   return svg;
 }
 
+// Contribution levels change at most once a day — cache client-side so
+// opening a dozen tabs in an hour doesn't refetch/rebuild the SVG each time.
+const HEATMAP_CACHE_KEY = "newtab-heatmap-data";
+const HEATMAP_CACHE_TTL = 60 * 60 * 1000;
+
+// The section header's "@user · <span>" text describes the heatmap
+// specifically (not the stats/row-list, which are windowed to maxDays
+// separately) — derive it from the real date range instead of hardcoding
+// "last year", so it can't silently drift if GitHub ever returns a
+// different span.
+function describeHeatmapSpan(days) {
+  if (!days.length) return "activity";
+  const dates = days.map((d) => new Date(`${d.date}T00:00:00Z`).getTime());
+  const spanDays = Math.round((Math.max(...dates) - Math.min(...dates)) / 86400000) + 1;
+  if (spanDays >= 350) return "last year activity";
+  if (spanDays >= 25) return `last ${Math.round(spanDays / 30)} months activity`;
+  return `last ${spanDays} day${spanDays === 1 ? "" : "s"} activity`;
+}
+
 async function renderHeatmap() {
   const container = document.getElementById("heatmap");
   try {
-    const res = await fetch(`/api/contributions?username=${CONFIG.githubUser}`);
-    if (!res.ok) throw new Error(`proxy ${res.status}`);
-    const { days } = await res.json();
+    let cached = null;
+    try {
+      cached = JSON.parse(localStorage.getItem(HEATMAP_CACHE_KEY) || "null");
+    } catch {
+      cached = null;
+    }
+
+    let days;
+    if (cached && Date.now() - cached.at < HEATMAP_CACHE_TTL) {
+      days = cached.days;
+    } else {
+      const res = await fetch(`/api/contributions?username=${CONFIG.githubUser}`, {
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!res.ok) throw new Error(`proxy ${res.status}`);
+      ({ days } = await res.json());
+      localStorage.setItem(HEATMAP_CACHE_KEY, JSON.stringify({ at: Date.now(), days }));
+    }
+
     container.textContent = "";
     container.appendChild(buildHeatmapSvg(days));
+    document.getElementById("log-user").textContent = `@${CONFIG.githubUser} · ${describeHeatmapSpan(days)}`;
   } catch {
     // Fallback: a third-party image render, used when the proxy isn't
     // available (local static preview, or not yet deployed).
@@ -313,7 +351,9 @@ const CACHE_KEY = "newtab-gh-data";
 const CACHE_TTL = 10 * 60 * 1000;
 
 async function fetchViaProxy() {
-  const res = await fetch(`/api/github-stats?days=${CONFIG.maxDays}`);
+  const res = await fetch(`/api/github-stats?days=${CONFIG.maxDays}`, {
+    signal: AbortSignal.timeout(8000),
+  });
   if (!res.ok) throw new Error(`proxy ${res.status}`);
   const data = await res.json();
   return { mode: "search", data };
@@ -322,7 +362,7 @@ async function fetchViaProxy() {
 async function fetchPublicEvents() {
   const res = await fetch(
     `https://api.github.com/users/${CONFIG.githubUser}/events/public?per_page=100`,
-    { headers: { Accept: "application/vnd.github+json" } }
+    { headers: { Accept: "application/vnd.github+json" }, signal: AbortSignal.timeout(8000) }
   );
   if (!res.ok) throw new Error(`GitHub API ${res.status}`);
   const events = await res.json();
@@ -330,7 +370,12 @@ async function fetchPublicEvents() {
 }
 
 async function fetchShipped() {
-  const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+  let cached = null;
+  try {
+    cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+  } catch {
+    cached = null; // corrupted cache entry — treat as absent, don't crash the whole feed
+  }
   if (cached && Date.now() - cached.at < CACHE_TTL) return cached.result;
 
   try {
@@ -367,15 +412,39 @@ function renderStatCells(cells) {
   for (const [label, value] of visible) container.appendChild(statCell(label, value));
 }
 
+// Single source of truth for merged > closed > draft > open precedence, fed
+// by each data source's own shape. Previously this cascade was written out
+// separately in statsFromSearch, rowsFromSearch, and rowsFromEvents, and the
+// copies had already drifted (rowsFromEvents fell through to printing the
+// raw GitHub event action for cases the others normalized to "open").
+function classifyPr({ merged, closed, draft }) {
+  if (merged) return "pr-merged";
+  if (closed) return "pr-closed";
+  if (draft) return "pr-draft";
+  return "pr-open";
+}
+
+const PR_VERBS = {
+  "pr-merged": "merged PR:",
+  "pr-closed": "closed PR:",
+  "pr-draft": "draft PR:",
+  "pr-open": "open PR:",
+};
+
 function statsFromSearch({ commits, prs, repos }) {
   let open = 0;
   let draft = 0;
   let merged = 0;
   let closed = 0;
   for (const pr of prs.items) {
-    if (pr.pull_request?.merged_at) merged++;
-    else if (pr.state === "closed") closed++;
-    else if (pr.draft) draft++;
+    const kind = classifyPr({
+      merged: Boolean(pr.pull_request?.merged_at),
+      closed: pr.state === "closed",
+      draft: Boolean(pr.draft),
+    });
+    if (kind === "pr-merged") merged++;
+    else if (kind === "pr-closed") closed++;
+    else if (kind === "pr-draft") draft++;
     else open++;
   }
   return [
@@ -559,15 +628,12 @@ function rowsFromSearch({ commits, prs }) {
 
   for (const pr of prs.items) {
     const repo = (pr.repository_url || "").split("/").pop() || "repo";
-    const kind = pr.pull_request?.merged_at
-      ? "pr-merged"
-      : pr.state === "closed"
-        ? "pr-closed"
-        : pr.draft
-          ? "pr-draft"
-          : "pr-open";
-    const verb = { "pr-merged": "merged PR:", "pr-closed": "closed PR:", "pr-draft": "draft PR:", "pr-open": "open PR:" }[kind];
-    rows.push({ verb, repo, detail: ` — ${pr.title}`, url: pr.html_url, sort: pr.updated_at, kind });
+    const kind = classifyPr({
+      merged: Boolean(pr.pull_request?.merged_at),
+      closed: pr.state === "closed",
+      draft: Boolean(pr.draft),
+    });
+    rows.push({ verb: PR_VERBS[kind], repo, detail: ` — ${pr.title}`, url: pr.html_url, sort: pr.updated_at, kind });
   }
 
   return rows.sort((a, b) => b.sort.localeCompare(a.sort));
@@ -608,19 +674,15 @@ function rowsFromEvents(events, cutoff) {
       }
     } else if (ev.type === "PullRequestEvent") {
       const pr = ev.payload.pull_request;
-      const kind =
-        ev.payload.action === "closed" && pr.merged
-          ? "pr-merged"
-          : ev.payload.action === "closed"
-            ? "pr-closed"
-            : pr.draft
-              ? "pr-draft"
-              : "pr-open";
-      const verb = kind === "pr-merged" ? "merged PR:" : kind === "pr-closed" ? "closed PR:" : `${ev.payload.action} PR:`;
-      rows.push({ verb, repo, detail: ` — ${pr.title}`, url: pr.html_url, sort: ev.created_at, kind });
+      const kind = classifyPr({
+        merged: ev.payload.action === "closed" && Boolean(pr.merged),
+        closed: ev.payload.action === "closed",
+        draft: Boolean(pr.draft),
+      });
+      rows.push({ verb: PR_VERBS[kind], repo, detail: ` — ${pr.title}`, url: pr.html_url, sort: ev.created_at, kind });
     } else if (ev.type === "CreateEvent" && ev.payload.ref_type === "repository") {
       rows.push({ verb: "created repo:", repo, detail: "", url: repoUrl, sort: ev.created_at, kind: "repo" });
-    } else if (ev.type === "ReleaseEvent") {
+    } else if (ev.type === "ReleaseEvent" && ev.payload.action === "published") {
       rows.push({ verb: "released:", repo, detail: ` ${ev.payload.release.tag_name}`, url: ev.payload.release.html_url, sort: ev.created_at, kind: "release" });
     } else if (ev.type === "IssuesEvent" && ev.payload.action === "opened") {
       rows.push({ verb: "opened issue:", repo, detail: ` — ${ev.payload.issue.title}`, url: ev.payload.issue.html_url, sort: ev.created_at, kind: "issue" });
