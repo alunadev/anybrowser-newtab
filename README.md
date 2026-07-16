@@ -17,7 +17,8 @@ Point any browser's new-tab page at your deployed URL and you're done.
 
 - **Search bar** — autofocused on load, submits to Google or navigates
   directly for URL-like input. Restores "open a tab, start typing" now that
-  the browser's own new-tab landing is overridden.
+  the browser's own new-tab landing is overridden. `Option+K` (Mac) /
+  `Ctrl+K` (elsewhere) refocuses it from anywhere on the page.
 - **Shipped** — your real GitHub contribution graph (same per-day data as
   your profile page, not an approximation), a stat row (commits, PRs
   opened/drafted/merged/closed, new repos — zero-value cards hide
