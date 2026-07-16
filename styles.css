@@ -91,6 +91,21 @@ a {
   width: 13rem;
 }
 
+@media (min-width: 1024px) {
+  /* Matches .layout's exact column ratio so the search bar's width lines up
+     with the Shortcuts column below it, instead of an arbitrary fixed size. */
+  .greeting {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--space-7);
+    align-items: center;
+  }
+
+  .search-form {
+    width: 100%;
+  }
+}
+
 .search-icon {
   position: absolute;
   left: var(--space-3);
