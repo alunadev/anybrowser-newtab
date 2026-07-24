@@ -1,0 +1,8 @@
+{
+  "name": "anybrowser-newtab",
+  "private": true,
+  "description": "A personal new-tab page: GitHub activity feed + shortcuts. Static site, no build step.",
+  "engines": {
+    "node": "20.x"
+  }
+}

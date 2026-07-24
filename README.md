@@ -7,6 +7,12 @@ dependencies to install.
 
 Point any browser's new-tab page at your deployed URL and you're done.
 
+![Screenshot of anybrowser-newtab: a greeting, a search bar, a GitHub contribution heatmap and recent-activity list, and a shortcuts grid](docs/screenshot.png)
+
+> Personal name, GitHub handle, and recent-activity items in the screenshot
+> above are blurred/fictionalized — the heatmap shape and rest of the layout
+> are real.
+
 > **Using a coding agent (Claude Code, Codex, Cursor, etc.)?** Hand it this
 > repo and tell it to read [`AGENTS.md`](AGENTS.md) — it'll interview you for
 > your name, GitHub username, and shortcuts, then set up and optionally
@@ -143,6 +149,15 @@ token just works — no need for a broader classic token.
 only in Vercel's environment variables, which the serverless function reads
 server-side. Without it configured, the page still works: it automatically
 falls back to the public Events API (public activity only).
+
+## Requirements
+
+- No local runtime needed to preview — it's a static site; any static file
+  server (or just opening `index.html` directly) works.
+- The two optional serverless functions in `api/` (used only when deployed to
+  Vercel) need Node's built-in `fetch`/`AbortSignal.timeout`, so `package.json`
+  pins Vercel's Node runtime to `20.x`. Bump that if you deploy elsewhere and
+  need a different version — anything ≥18 works.
 
 ## Notes and limitations
 
