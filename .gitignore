@@ -4,3 +4,6 @@ config.js
 
 .DS_Store
 .vercel
+
+# Agent session log — internal working notes, not part of the public repo.
+log.md
