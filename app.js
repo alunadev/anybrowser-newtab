@@ -13,6 +13,8 @@ const ICONS = {
   linkedin:
     "M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z",
   x: "M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z",
+  youtube:
+    "M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z",
   globe:
     "M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm9.949 11h-3.98c-.11-2.868-.775-5.4-1.795-7.26A10.02 10.02 0 0 1 21.949 11zM12 2.05c.9 0 2.734 2.775 2.966 8.95H9.034C9.266 4.825 11.1 2.05 12 2.05zM7.826 3.74C6.806 5.6 6.14 8.132 6.031 11h-3.98a10.02 10.02 0 0 1 5.775-7.26zM2.05 13h3.98c.11 2.868.776 5.4 1.796 7.26A10.02 10.02 0 0 1 2.051 13zM12 21.95c-.9 0-2.734-2.775-2.966-8.95h5.932c-.232 6.175-2.066 8.95-2.966 8.95zm4.174-1.69c1.02-1.86 1.686-4.392 1.795-7.26h3.98a10.02 10.02 0 0 1-5.775 7.26z",
 };
@@ -305,11 +307,46 @@ async function renderHeatmap() {
 
 // ---- Search bar ----
 // Recreates "open a new tab, start typing" now that the browser's own
-// omnibox landing behavior is replaced by this page.
+// omnibox landing behavior is replaced by this page. Suggestions come from
+// this box's own search history (localStorage — this browser/origin only),
+// not Chrome's real address-bar history: no page can read that.
 function looksLikeUrl(query) {
   if (/\s/.test(query)) return false;
   if (/^https?:\/\//i.test(query)) return true;
   return /^[a-z0-9-]+(\.[a-z0-9-]+)+([:/?#].*)?$/i.test(query);
+}
+
+const SEARCH_HISTORY_KEY = "nt-search-history";
+const SEARCH_HISTORY_MAX = 10;
+const SEARCH_SUGGESTIONS_MAX = 5;
+
+function loadSearchHistory() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY));
+    return Array.isArray(raw) ? raw.filter((q) => typeof q === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveSearchHistory(history) {
+  localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history));
+}
+
+function addToSearchHistory(query) {
+  const history = loadSearchHistory().filter((q) => q.toLowerCase() !== query.toLowerCase());
+  history.unshift(query);
+  saveSearchHistory(history.slice(0, SEARCH_HISTORY_MAX));
+}
+
+function removeFromSearchHistory(query) {
+  saveSearchHistory(loadSearchHistory().filter((q) => q !== query));
+}
+
+function matchingSearchHistory(query) {
+  const history = loadSearchHistory();
+  const matches = query ? history.filter((q) => q.toLowerCase().includes(query.toLowerCase())) : history;
+  return matches.slice(0, SEARCH_SUGGESTIONS_MAX);
 }
 
 function initSearch() {
@@ -322,15 +359,123 @@ function initSearch() {
   hint.textContent = `${HOTKEY_LABEL}K`;
   form.appendChild(hint);
 
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const query = input.value.trim();
-    if (!query) return;
+  const suggestionsBox = document.createElement("div");
+  suggestionsBox.className = "search-suggestions";
+  suggestionsBox.setAttribute("role", "listbox");
+  suggestionsBox.hidden = true;
+  form.appendChild(suggestionsBox);
+
+  let suggestions = [];
+  let activeIndex = -1;
+
+  function navigate(query) {
     window.location.href = looksLikeUrl(query)
       ? /^https?:\/\//i.test(query)
         ? query
         : `https://${query}`
       : `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+  }
+
+  function performSearch(query) {
+    addToSearchHistory(query);
+    navigate(query);
+  }
+
+  function hideSuggestions() {
+    suggestions = [];
+    activeIndex = -1;
+    suggestionsBox.hidden = true;
+    suggestionsBox.innerHTML = "";
+  }
+
+  function renderSuggestions() {
+    suggestionsBox.innerHTML = "";
+
+    suggestions.forEach((query, i) => {
+      const row = document.createElement("div");
+      row.className = "search-suggestion" + (i === activeIndex ? " active" : "");
+      row.setAttribute("role", "option");
+      row.setAttribute("aria-selected", String(i === activeIndex));
+
+      const text = document.createElement("span");
+      text.className = "search-suggestion-text";
+      text.textContent = query;
+      row.appendChild(text);
+
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "search-suggestion-remove";
+      remove.setAttribute("aria-label", `Remove "${query}" from search history`);
+      remove.textContent = "×";
+      // mousedown + preventDefault (not click) keeps focus in the input, so
+      // removing an entry doesn't blur-close the dropdown out from under it.
+      remove.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        removeFromSearchHistory(query);
+        updateSuggestions(input.value.trim());
+      });
+      row.appendChild(remove);
+
+      row.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        input.value = query;
+        performSearch(query);
+      });
+
+      suggestionsBox.appendChild(row);
+    });
+
+    if (suggestions.length) {
+      const clear = document.createElement("button");
+      clear.type = "button";
+      clear.className = "search-suggestions-clear";
+      clear.textContent = "Clear search history";
+      clear.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        saveSearchHistory([]);
+        hideSuggestions();
+      });
+      suggestionsBox.appendChild(clear);
+    }
+
+    suggestionsBox.hidden = suggestions.length === 0;
+  }
+
+  function updateSuggestions(query) {
+    suggestions = matchingSearchHistory(query);
+    activeIndex = -1;
+    renderSuggestions();
+  }
+
+  input.addEventListener("input", () => updateSuggestions(input.value.trim()));
+  input.addEventListener("focus", () => updateSuggestions(input.value.trim()));
+  input.addEventListener("blur", () => hideSuggestions());
+
+  input.addEventListener("keydown", (e) => {
+    if (!suggestions.length) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      activeIndex = Math.min(activeIndex + 1, suggestions.length - 1);
+      renderSuggestions();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      activeIndex = Math.max(activeIndex - 1, -1);
+      renderSuggestions();
+    } else if (e.key === "Escape") {
+      hideSuggestions();
+    } else if (e.key === "Enter" && activeIndex >= 0) {
+      e.preventDefault();
+      input.value = suggestions[activeIndex];
+      performSearch(suggestions[activeIndex]);
+    }
+  });
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const query = input.value.trim();
+    if (!query) return;
+    performSearch(query);
   });
 }
 

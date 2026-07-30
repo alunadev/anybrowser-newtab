@@ -160,6 +160,77 @@ a {
   display: none;
 }
 
+.search-suggestions {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  right: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  z-index: 20;
+}
+
+.search-suggestion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-ink-secondary);
+  cursor: pointer;
+}
+
+.search-suggestion:hover,
+.search-suggestion.active {
+  background: var(--color-accent-soft);
+  color: var(--color-ink);
+}
+
+.search-suggestion-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-suggestion-remove {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  line-height: 1;
+  cursor: pointer;
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+}
+
+.search-suggestion-remove:hover {
+  color: var(--color-ink);
+  background: var(--color-border);
+}
+
+.search-suggestions-clear {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  border: none;
+  border-top: 1px solid var(--color-border);
+  background: none;
+  cursor: pointer;
+}
+
+.search-suggestions-clear:hover {
+  color: var(--color-ink);
+  background: var(--color-accent-soft);
+}
+
 /* ---- Two-column layout: desktop only ---- */
 
 .layout {
@@ -242,6 +313,7 @@ a {
 .shortcut[data-brand="linkedin"]:hover svg { color: #0A66C2; }
 .shortcut[data-brand="gmail"]:hover svg    { color: #EA4335; }
 .shortcut[data-brand="gcal"]:hover svg     { color: #4285F4; }
+.shortcut[data-brand="youtube"]:hover svg  { color: #FF0000; }
 /* Notion, GitHub and X marks are black — use ink so they stay visible in dark */
 .shortcut[data-brand="notion"]:hover svg,
 .shortcut[data-brand="github"]:hover svg,
@@ -253,6 +325,7 @@ a {
   .shortcut[data-brand="linkedin"] svg { color: #0A66C2; }
   .shortcut[data-brand="gmail"] svg    { color: #EA4335; }
   .shortcut[data-brand="gcal"] svg     { color: #4285F4; }
+  .shortcut[data-brand="youtube"] svg  { color: #FF0000; }
   .shortcut[data-brand="notion"] svg,
   .shortcut[data-brand="github"] svg,
   .shortcut[data-brand="x"] svg        { color: var(--color-ink); }

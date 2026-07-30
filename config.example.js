@@ -21,7 +21,7 @@ const CONFIG = {
 
   // Shortcuts row. Order here is display order.
   // `icon` must be one of the keys defined in ICONS (see app.js):
-  //   github, notion, gmail, gcal, linkedin, x, globe (generic fallback)
+  //   github, notion, gmail, gcal, linkedin, x, youtube, globe (generic fallback)
   shortcuts: [
     { label: "GitHub", url: "https://github.com/octocat", icon: "github" },
     { label: "Gmail", url: "https://mail.google.com", icon: "gmail" },
