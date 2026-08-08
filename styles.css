@@ -379,41 +379,51 @@ a {
   }
 }
 
-/* ---- Stat cards ---- */
+/* ---- AI Agents dock ----
+   Icon-only tiles in a single row — deliberately not styled like .shortcut
+   (no label, no hotkey, square instead of full-width) so this reads as a
+   distinct, smaller set of destinations rather than more shortcuts. */
 
-.stats {
-  /* Flex, not grid: card count varies (zero-value stats are dropped), and
-     grid's auto-fit leaves phantom empty tracks when there are few cards.
-     Flex-grow just redistributes the real width among what's actually there. */
+.agents {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1px;
-  background: var(--color-border);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  overflow: hidden;
+  gap: var(--space-2);
   margin-bottom: var(--space-6);
 }
 
-.stats[hidden] {
-  display: none;
-}
-
-.stat {
-  flex: 1 1 7rem;
+.agent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
   background: var(--color-surface);
-  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: border-color 120ms ease, background 120ms ease;
 }
 
-.stat-label {
-  font-size: var(--text-xs);
-  color: var(--color-muted);
-  margin-bottom: var(--space-1);
+.agent:hover {
+  border-color: var(--color-muted);
 }
 
-.stat-value {
-  font-size: var(--text-lg);
-  font-weight: var(--weight-semibold);
+.agent svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  fill: currentColor;
+  color: var(--color-ink-secondary);
+  transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.agent[data-brand="claude"]:hover svg { color: #D97757; }
+.agent[data-brand="gemini"]:hover svg { color: #8E75B2; }
+/* OpenAI's mark is a flat dark charcoal, not a saturated brand hue — use ink so it still reads on hover in dark mode. */
+.agent[data-brand="openai"]:hover svg { color: var(--color-ink); }
+
+@media (hover: none) {
+  .agent[data-brand="claude"] svg { color: #D97757; }
+  .agent[data-brand="gemini"] svg { color: #8E75B2; }
+  .agent[data-brand="openai"] svg { color: var(--color-ink); }
 }
 
 /* ---- Shipped list (literal PR-row replica) ---- */

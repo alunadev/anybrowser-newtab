@@ -27,16 +27,21 @@ Point any browser's new-tab page at your deployed URL and you're done.
   `Ctrl+K` (elsewhere) refocuses it from anywhere on the page.
 - **Shipped** — your real GitHub contribution graph (same per-day data as
   your profile page, not an approximation — always a full year, regardless
-  of `maxDays`), a stat row, and a list of recent activity with relative
-  timestamps and GitHub-style state icons. Out of the box (no token) this
-  reads the public Events API — pushes, PRs opened, merged, new repos. With
-  the optional token below, it switches to the Search API for a richer,
-  more accurate breakdown (real commits, open/draft/merged/closed PRs).
+  of `maxDays`) with the total contribution count for the year alongside it,
+  plus a list of recent activity with relative timestamps and GitHub-style
+  state icons. Out of the box (no token) this reads the public Events API —
+  pushes, PRs opened, merged, new repos. With the optional token below, it
+  switches to the Search API for a richer, more accurate breakdown (real
+  commits, open/draft/merged/closed PRs).
+- **AI Agents** — a small icon-only dock (Claude, ChatGPT, Gemini) shown
+  above Shortcuts, kept visually separate since it's a fixed set of
+  assistant tabs rather than a growing bookmark list.
 - **Shortcuts** — a configurable grid of links with official brand icons
-  (GitHub, Gmail, Google Calendar, Notion, LinkedIn, X, or any URL via a
-  generic globe icon), muted by default and tinted with the real brand color
-  on hover. The first 9 each get a real keyboard hotkey — `Option+1..9` on
-  Mac, `Ctrl+1..9` elsewhere — shown right-aligned on the card.
+  (GitHub, Gmail, Google Calendar, Notion, LinkedIn, X, YouTube, or any URL
+  via a generic globe icon), muted by default and tinted with the real brand
+  color on hover. The first 9 each get a real keyboard hotkey —
+  `Option+1..9` on Mac, `Ctrl+1..9` elsewhere — shown right-aligned on the
+  card.
 - **Greeting** — time-of-day message plus a small SVG moon-phase indicator,
   because why not.
 - **Light/dark** — follows the OS/browser color scheme automatically, no
@@ -76,12 +81,14 @@ git history — even in your own fork):
 | ------------ | -------------------------------------------------------------------- |
 | `name`       | Used in the greeting: "Good morning, `<name>`".                      |
 | `githubUser` | Your GitHub username. Powers the entire "Shipped" section.           |
-| `maxDays`    | How many days back the stats/recent-activity list look (default `7`). Doesn't affect the heatmap, which always shows a full year. |
+| `maxDays`    | How many days back the recent-activity list looks (default `7`). Doesn't affect the heatmap, which always shows a full year. |
+| `agents`     | Array of `{ label, url, icon }` for the AI Agents dock. Icon must be `claude`, `openai`, or `gemini`. |
 | `shortcuts`  | Array of `{ label, url, icon }`. Order in the array = display order. |
 
-Available `icon` values: `github`, `notion`, `gmail`, `gcal`, `linkedin`, `x`,
-or `globe` (a generic fallback for any other link). Icons are official brand
-SVG marks — see `ICONS` in `app.js` if you want to add another one.
+Available `icon` values for `shortcuts`: `github`, `notion`, `gmail`, `gcal`,
+`linkedin`, `x`, `youtube`, or `globe` (a generic fallback for any other
+link). Icons are official brand SVG marks — see `ICONS` in `app.js` if you
+want to add another one.
 
 ## Deploy
 

@@ -7,12 +7,13 @@ about 5 minutes of back-and-forth with the user.
 ## What this project is
 
 A static (no build step) personal new-tab page: a search bar, a greeting, a
-GitHub "Shipped" activity feed (real contribution heatmap + stats + recent
-items), and a row of shortcut links — the first 9 of which get a real
-keyboard hotkey (`Option+1..9` on Mac, `Ctrl+1..9` elsewhere; `Option+K` /
-`Ctrl+K` focuses the search bar). The search bar and hotkeys need no
-configuration — they just work. Everything the user will ever want to
-change lives in one file, `config.js` (copied from `config.example.js`).
+GitHub "Shipped" activity feed (real contribution heatmap + yearly total +
+recent items), an AI Agents dock (Claude, ChatGPT, Gemini), and a row of
+shortcut links — the first 9 of which get a real keyboard hotkey
+(`Option+1..9` on Mac, `Ctrl+1..9` elsewhere; `Option+K` / `Ctrl+K` focuses
+the search bar). The search bar and hotkeys need no configuration — they
+just work. Everything the user will ever want to change lives in one file,
+`config.js` (copied from `config.example.js`).
 
 ## Step 1 — Interview the user
 
@@ -20,9 +21,12 @@ Ask for the following. Don't guess or invent values — if they're unsure about
 a shortcut URL, ask them to paste it, or skip that shortcut entirely.
 
 1. **Name** — for the greeting ("Good morning, `<name>`").
-2. **GitHub username** — powers the whole "Shipped" section (heatmap, stats,
-   recent activity). This is required.
-3. **Shortcuts** — ask which of these they want, and the real URL for each:
+2. **GitHub username** — powers the whole "Shipped" section (heatmap, yearly
+   total, recent activity). This is required.
+3. **AI Agents dock** — ask whether they want Claude, ChatGPT, and/or Gemini
+   in the dock above Shortcuts (all three by default, in that order — drop
+   any they don't use).
+4. **Shortcuts** — ask which of these they want, and the real URL for each:
    - GitHub profile
    - Gmail / email inbox
    - Calendar
@@ -30,12 +34,13 @@ a shortcut URL, ask them to paste it, or skip that shortcut entirely.
    - Portfolio / personal site
    - LinkedIn
    - X / Twitter
+   - YouTube
    - Anything else they open daily (use the generic `globe` icon for
      anything that isn't in `ICONS` inside `app.js`)
 
    Order matters — it's the display order. Ask if they have a preference;
    otherwise keep the order they gave you.
-4. **Deploy target** — ask whether they want to:
+5. **Deploy target** — ask whether they want to:
    - preview locally only, for now, or
    - deploy to Vercel today (see Step 4).
 
@@ -51,8 +56,9 @@ cp config.example.js config.js
 
 Edit `config.js` with the answers from Step 1. Keep the file's existing
 shape — it's a single `CONFIG` object with `name`, `githubUser`, `maxDays`
-(default `7` is fine unless asked), and a `shortcuts` array of
-`{ label, url, icon }`.
+(default `7` is fine unless asked), an `agents` array of
+`{ label, url, icon }` (icon: `claude` / `openai` / `gemini`), and a
+`shortcuts` array of `{ label, url, icon }`.
 
 `config.js` is gitignored on purpose — do not remove it from `.gitignore`
 unless the user explicitly asks to commit their personal data (e.g. because
@@ -65,10 +71,10 @@ python3 -m http.server 4173
 ```
 
 Open `http://localhost:4173` (or use your own preview/browser tooling) and
-confirm with the user: does the greeting show their name, do the shortcuts
-look right (and their hotkey numbers match the order they wanted), does the
-GitHub activity load, does the search bar work? Fix anything before moving
-on.
+confirm with the user: does the greeting show their name, does the AI Agents
+dock have the right agents, do the shortcuts look right (and their hotkey
+numbers match the order they wanted), does the GitHub activity load, does
+the search bar work? Fix anything before moving on.
 
 ## Step 4 — Deploy (if the user wants it live today)
 

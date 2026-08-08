@@ -41,8 +41,15 @@ module.exports = async function handler(req, res) {
       return;
     }
 
+    // Same fragment carries GitHub's own "N contributions in the last year"
+    // heading (id="js-contribution-activity-description") — reuse their
+    // number instead of re-deriving one from the day levels, which are
+    // bucketed (0-4) and can't reconstruct an exact count.
+    const totalMatch = html.match(/id="js-contribution-activity-description"[^>]*>([\s\S]*?)<\/h2>/);
+    const total = totalMatch ? Number(totalMatch[1].replace(/[^\d]/g, "")) : null;
+
     res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate=86400");
-    res.status(200).json({ days });
+    res.status(200).json({ days, total });
   } catch (err) {
     res.status(502).json({ error: err.message });
   }
