@@ -20,11 +20,12 @@ const CONFIG = {
   maxDays: 7,
 
   // AI Agents dock — icon-only, shown above Shortcuts. `icon` must be one of
-  // claude, openai, gemini (see ICONS in app.js).
+  // claude, openai, gemini, grok (see ICONS in app.js).
   agents: [
     { label: "Claude", url: "https://claude.ai", icon: "claude" },
     { label: "ChatGPT", url: "https://chatgpt.com", icon: "openai" },
     { label: "Gemini", url: "https://gemini.google.com", icon: "gemini" },
+    { label: "Grok", url: "https://grok.com", icon: "grok" },
   ],
 
   // Shortcuts row. Order here is display order.

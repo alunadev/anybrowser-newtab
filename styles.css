@@ -417,13 +417,15 @@ a {
 
 .agent[data-brand="claude"]:hover svg { color: #D97757; }
 .agent[data-brand="gemini"]:hover svg { color: #8E75B2; }
-/* OpenAI's mark is a flat dark charcoal, not a saturated brand hue — use ink so it still reads on hover in dark mode. */
+/* OpenAI's and Grok's marks are flat black/white, not a saturated brand hue — use ink so they still read on hover in dark mode. */
 .agent[data-brand="openai"]:hover svg { color: var(--color-ink); }
+.agent[data-brand="grok"]:hover svg   { color: var(--color-ink); }
 
 @media (hover: none) {
   .agent[data-brand="claude"] svg { color: #D97757; }
   .agent[data-brand="gemini"] svg { color: #8E75B2; }
   .agent[data-brand="openai"] svg { color: var(--color-ink); }
+  .agent[data-brand="grok"] svg   { color: var(--color-ink); }
 }
 
 /* ---- Shipped list (literal PR-row replica) ---- */

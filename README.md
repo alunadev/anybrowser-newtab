@@ -82,7 +82,7 @@ git history — even in your own fork):
 | `name`       | Used in the greeting: "Good morning, `<name>`".                      |
 | `githubUser` | Your GitHub username. Powers the entire "Shipped" section.           |
 | `maxDays`    | How many days back the recent-activity list looks (default `7`). Doesn't affect the heatmap, which always shows a full year. |
-| `agents`     | Array of `{ label, url, icon }` for the AI Agents dock. Icon must be `claude`, `openai`, or `gemini`. |
+| `agents`     | Array of `{ label, url, icon }` for the AI Agents dock. Icon must be `claude`, `openai`, `gemini`, or `grok`. |
 | `shortcuts`  | Array of `{ label, url, icon }`. Order in the array = display order. |
 
 Available `icon` values for `shortcuts`: `github`, `notion`, `gmail`, `gcal`,

@@ -57,7 +57,7 @@ cp config.example.js config.js
 Edit `config.js` with the answers from Step 1. Keep the file's existing
 shape — it's a single `CONFIG` object with `name`, `githubUser`, `maxDays`
 (default `7` is fine unless asked), an `agents` array of
-`{ label, url, icon }` (icon: `claude` / `openai` / `gemini`), and a
+`{ label, url, icon }` (icon: `claude` / `openai` / `gemini` / `grok`), and a
 `shortcuts` array of `{ label, url, icon }`.
 
 `config.js` is gitignored on purpose — do not remove it from `.gitignore`
