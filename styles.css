@@ -357,7 +357,7 @@ a {
   }
 }
 
-/* ---- Icon docks (AI Agents, Tools) ----
+/* ---- Icon docks (AI Agents, Tools, Build) ----
    Icon-only tiles in a single row — deliberately not styled like .shortcut
    (no label, no hotkey, square instead of full-width) so these read as
    distinct, smaller sets of destinations rather than more shortcuts. */
@@ -411,6 +411,7 @@ a {
 [data-brand="gcal"]     { --brand: #4285F4; }
 [data-brand="gdrive"]   { --brand: #4285F4; }
 [data-brand="gsheets"]  { --brand: #34A853; }
+[data-brand="supabase"] { --brand: #3FCF8E; }
 [data-brand="youtube"]  { --brand: #FF0000; }
 [data-brand="claude"]   { --brand: #D97757; }
 [data-brand="gemini"]   { --brand: #8E75B2; }

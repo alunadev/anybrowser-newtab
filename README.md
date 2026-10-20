@@ -33,12 +33,13 @@ Point any browser's new-tab page at your deployed URL and you're done.
   pushes, PRs opened, merged, new repos. With the optional token below, it
   switches to the Search API for a richer, more accurate breakdown (real
   commits, open/draft/merged/closed PRs).
-- **AI Agents** — a small icon-only dock (Claude, ChatGPT, Gemini) shown
-  above Shortcuts, kept visually separate since it's a fixed set of
+- **AI Agents** — a small icon-only dock (Claude, ChatGPT, Gemini, Grok)
+  shown above Shipped, kept visually separate since it's a fixed set of
   assistant tabs rather than a growing bookmark list.
-- **Tools** — an icon-only dock (Gmail, Google Calendar, Google Drive,
-  Google Sheets, GitHub, Vercel, …) between AI Agents and Shortcuts, for work apps you open
-  all day. Same tile style as AI Agents; the label shows as a tooltip.
+- **Tools** and **Build** — two more icon-only docks in the sidebar, same
+  tile style as AI Agents (the label shows as a tooltip). Tools is for
+  everyday apps (Gmail, Google Calendar, Drive, Sheets); Build is where you
+  make the product (GitHub, Vercel, Supabase).
 - **Shortcuts** — a configurable grid of labeled links with official brand
   icons (Notion, LinkedIn, X, YouTube, or any URL via a generic globe icon),
   muted by default and tinted with the real brand color on hover. The first
@@ -86,10 +87,12 @@ git history — even in your own fork):
 | `maxDays`    | How many days back the recent-activity list looks (default `7`). Doesn't affect the heatmap, which always shows a full year. |
 | `agents`     | Array of `{ label, url, icon }` for the AI Agents dock. Icon must be `claude`, `openai`, `gemini`, or `grok`. |
 | `tools`      | Optional array of `{ label, url, icon }` for the icon-only Tools dock. Same icon keys as `shortcuts`; the group is hidden if empty or omitted. |
+| `build`      | Optional array of `{ label, url, icon }` for the icon-only Build dock (GitHub, Vercel, Supabase, …). Hidden if empty or omitted. |
 | `shortcuts`  | Array of `{ label, url, icon }`. Order in the array = display order. |
 
-Available `icon` values for `tools` and `shortcuts`: `github`, `notion`,
-`gmail`, `gcal`, `gdrive`, `gsheets`, `vercel`, `linkedin`, `x`, `youtube`, or `globe` (a generic fallback for any other
+Available `icon` values for `tools`, `build` and `shortcuts`: `github`,
+`notion`, `gmail`, `gcal`, `gdrive`, `gsheets`, `vercel`, `supabase`,
+`linkedin`, `x`, `youtube`, or `globe` (a generic fallback for any other
 link). Icons are official brand SVG marks — see `ICONS` in `app.js` if you
 want to add another one.
 

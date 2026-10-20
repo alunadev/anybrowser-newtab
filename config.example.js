@@ -19,7 +19,7 @@ const CONFIG = {
   // contribution graph shows, independent of this setting).
   maxDays: 7,
 
-  // AI Agents dock — icon-only, shown above Shortcuts. `icon` must be one of
+  // AI Agents dock — icon-only, shown above Shipped. `icon` must be one of
   // claude, openai, gemini, grok (see ICONS in app.js).
   agents: [
     { label: "Claude", url: "https://claude.ai", icon: "claude" },
@@ -28,18 +28,24 @@ const CONFIG = {
     { label: "Grok", url: "https://grok.com", icon: "grok" },
   ],
 
-  // Tools — work apps you open all day. Icon-only dock like AI Agents, shown
-  // between AI Agents and Shortcuts (no hotkeys; the label is the tooltip).
+  // Tools and Build — icon-only docks in the sidebar (like AI Agents, which
+  // sits above Shipped), no hotkeys; the label is the tooltip. Tools is for
+  // everyday work apps, Build for the places you make the product. Either
+  // group is hidden if empty or omitted.
   // `icon` must be one of the keys defined in ICONS (see app.js):
-  //   github, gmail, gcal, gdrive, gsheets, vercel, notion, linkedin, x, youtube,
-  //   globe (generic fallback)
+  //   github, gmail, gcal, gdrive, gsheets, vercel, supabase, notion,
+  //   linkedin, x, youtube, globe (generic fallback)
   tools: [
     { label: "Gmail", url: "https://mail.google.com", icon: "gmail" },
     { label: "Calendar", url: "https://calendar.google.com", icon: "gcal" },
     { label: "Drive", url: "https://drive.google.com", icon: "gdrive" },
     { label: "Sheets", url: "https://docs.google.com/spreadsheets/u/0/", icon: "gsheets" },
+  ],
+
+  build: [
     { label: "GitHub", url: "https://github.com/octocat", icon: "github" },
     { label: "Vercel", url: "https://vercel.com/dashboard", icon: "vercel" },
+    { label: "Supabase", url: "https://supabase.com/dashboard", icon: "supabase" },
   ],
 
   // Shortcuts — everything else you visit often, as labeled rows. The first 9
