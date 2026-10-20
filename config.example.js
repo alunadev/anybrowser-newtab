@@ -28,13 +28,23 @@ const CONFIG = {
     { label: "Grok", url: "https://grok.com", icon: "grok" },
   ],
 
-  // Shortcuts row. Order here is display order.
+  // Tools — work apps you open all day. Icon-only dock like AI Agents, shown
+  // between AI Agents and Shortcuts (no hotkeys; the label is the tooltip).
   // `icon` must be one of the keys defined in ICONS (see app.js):
-  //   github, notion, gmail, gcal, linkedin, x, youtube, globe (generic fallback)
-  shortcuts: [
-    { label: "GitHub", url: "https://github.com/octocat", icon: "github" },
+  //   github, gmail, gcal, gdrive, gsheets, vercel, notion, linkedin, x, youtube,
+  //   globe (generic fallback)
+  tools: [
     { label: "Gmail", url: "https://mail.google.com", icon: "gmail" },
     { label: "Calendar", url: "https://calendar.google.com", icon: "gcal" },
+    { label: "Drive", url: "https://drive.google.com", icon: "gdrive" },
+    { label: "Sheets", url: "https://docs.google.com/spreadsheets/u/0/", icon: "gsheets" },
+    { label: "GitHub", url: "https://github.com/octocat", icon: "github" },
+    { label: "Vercel", url: "https://vercel.com/dashboard", icon: "vercel" },
+  ],
+
+  // Shortcuts — everything else you visit often, as labeled rows. The first 9
+  // get the Option/Ctrl+1..9 hotkeys (same `icon` keys as above).
+  shortcuts: [
     { label: "Notion", url: "https://notion.so", icon: "notion" },
     { label: "Portfolio", url: "https://example.com", icon: "globe" },
     { label: "LinkedIn", url: "https://www.linkedin.com/in/your-handle/", icon: "linkedin" },

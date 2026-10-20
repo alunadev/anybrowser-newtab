@@ -36,12 +36,14 @@ Point any browser's new-tab page at your deployed URL and you're done.
 - **AI Agents** — a small icon-only dock (Claude, ChatGPT, Gemini) shown
   above Shortcuts, kept visually separate since it's a fixed set of
   assistant tabs rather than a growing bookmark list.
-- **Shortcuts** — a configurable grid of links with official brand icons
-  (GitHub, Gmail, Google Calendar, Notion, LinkedIn, X, YouTube, or any URL
-  via a generic globe icon), muted by default and tinted with the real brand
-  color on hover. The first 9 each get a real keyboard hotkey —
-  `Option+1..9` on Mac, `Ctrl+1..9` elsewhere — shown right-aligned on the
-  card.
+- **Tools** — an icon-only dock (Gmail, Google Calendar, Google Drive,
+  Google Sheets, GitHub, Vercel, …) between AI Agents and Shortcuts, for work apps you open
+  all day. Same tile style as AI Agents; the label shows as a tooltip.
+- **Shortcuts** — a configurable grid of labeled links with official brand
+  icons (Notion, LinkedIn, X, YouTube, or any URL via a generic globe icon),
+  muted by default and tinted with the real brand color on hover. The first
+  9 each get a real keyboard hotkey — `Option+1..9` on Mac, `Ctrl+1..9`
+  elsewhere — shown right-aligned on the card.
 - **Greeting** — time-of-day message plus a small SVG moon-phase indicator,
   because why not.
 - **Light/dark** — follows the OS/browser color scheme automatically, no
@@ -83,10 +85,11 @@ git history — even in your own fork):
 | `githubUser` | Your GitHub username. Powers the entire "Shipped" section.           |
 | `maxDays`    | How many days back the recent-activity list looks (default `7`). Doesn't affect the heatmap, which always shows a full year. |
 | `agents`     | Array of `{ label, url, icon }` for the AI Agents dock. Icon must be `claude`, `openai`, `gemini`, or `grok`. |
+| `tools`      | Optional array of `{ label, url, icon }` for the icon-only Tools dock. Same icon keys as `shortcuts`; the group is hidden if empty or omitted. |
 | `shortcuts`  | Array of `{ label, url, icon }`. Order in the array = display order. |
 
-Available `icon` values for `shortcuts`: `github`, `notion`, `gmail`, `gcal`,
-`linkedin`, `x`, `youtube`, or `globe` (a generic fallback for any other
+Available `icon` values for `tools` and `shortcuts`: `github`, `notion`,
+`gmail`, `gcal`, `gdrive`, `gsheets`, `vercel`, `linkedin`, `x`, `youtube`, or `globe` (a generic fallback for any other
 link). Icons are official brand SVG marks — see `ICONS` in `app.js` if you
 want to add another one.
 

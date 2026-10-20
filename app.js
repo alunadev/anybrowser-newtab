@@ -35,6 +35,18 @@ const ICONS = {
     path:
       "M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm9.949 11h-3.98c-.11-2.868-.775-5.4-1.795-7.26A10.02 10.02 0 0 1 21.949 11zM12 2.05c.9 0 2.734 2.775 2.966 8.95H9.034C9.266 4.825 11.1 2.05 12 2.05zM7.826 3.74C6.806 5.6 6.14 8.132 6.031 11h-3.98a10.02 10.02 0 0 1 5.775-7.26zM2.05 13h3.98c.11 2.868.776 5.4 1.796 7.26A10.02 10.02 0 0 1 2.051 13zM12 21.95c-.9 0-2.734-2.775-2.966-8.95h5.932c-.232 6.175-2.066 8.95-2.966 8.95zm4.174-1.69c1.02-1.86 1.686-4.392 1.795-7.26h3.98a10.02 10.02 0 0 1-5.775 7.26z",
   },
+  // Vercel's official triangle (simple-icons).
+  vercel: { path: "M24 22.525H0l12-21.05 12 21.05z" },
+  // Google Drive's official mark (simple-icons, hex 4285F4).
+  gdrive: {
+    path:
+      "M12.01 1.485c-2.082 0-3.754.02-3.743.047.01.02 1.708 3.001 3.774 6.62l3.76 6.574h3.76c2.081 0 3.753-.02 3.742-.047-.005-.02-1.708-3.001-3.775-6.62l-3.76-6.574zm-4.76 1.73a789.828 789.861 0 0 0-3.63 6.319L0 15.868l1.89 3.298 1.885 3.297 3.62-6.335 3.618-6.33-1.88-3.287C8.1 4.704 7.255 3.22 7.25 3.214zm2.259 12.653-.203.348c-.114.198-.96 1.672-1.88 3.287a423.93 423.948 0 0 1-1.698 2.97c-.01.026 3.24.042 7.222.042h7.244l1.796-3.157c.992-1.734 1.85-3.23 1.906-3.323l.104-.167h-7.249z",
+  },
+  // Google Sheets' official mark (simple-icons, hex 34A853).
+  gsheets: {
+    path:
+      "M11.318 12.545H7.91v-1.909h3.41v1.91zM14.728 0v6h6l-6-6zm1.363 10.636h-3.41v1.91h3.41v-1.91zm0 3.273h-3.41v1.91h3.41v-1.91zM20.727 6.5v15.864c0 .904-.732 1.636-1.636 1.636H4.909a1.636 1.636 0 0 1-1.636-1.636V1.636C3.273.732 4.005 0 4.909 0h9.318v6.5h6.5zm-3.273 2.773H6.545v7.909h10.91v-7.91zm-6.136 4.636H7.91v1.91h3.41v-1.91z",
+  },
   // Anthropic's official Claude mark (simple-icons, hex D97757).
   claude: {
     path:
@@ -187,20 +199,26 @@ function renderShortcuts() {
   });
 }
 
-// AI Agents dock — icon-only, no labels/hotkeys. Kept visually and
-// semantically separate from Shortcuts: these are a small fixed set of
-// assistant tabs, not a growing personal bookmark list.
-function renderAgents() {
-  const row = document.getElementById("agents");
+// Icon-only docks (AI Agents, Tools) — no labels/hotkeys. Kept visually and
+// semantically separate from Shortcuts: small fixed sets of destinations
+// (assistant tabs, work apps), not a growing personal bookmark list.
+function renderDock(id, items) {
+  const row = document.getElementById(id);
   if (!row) return;
-  CONFIG.agents.forEach((agent) => {
+  if (!items || !items.length) {
+    // Hide the whole group (header + tiles) when a config leaves it empty.
+    row.previousElementSibling.hidden = true;
+    row.hidden = true;
+    return;
+  }
+  items.forEach((item) => {
     const a = document.createElement("a");
-    a.className = "agent";
-    a.href = agent.url;
-    a.dataset.brand = agent.icon;
-    a.title = agent.label;
-    a.setAttribute("aria-label", agent.label);
-    a.appendChild(brandIcon(agent.icon));
+    a.className = "dock-item";
+    a.href = item.url;
+    a.dataset.brand = item.icon;
+    a.title = item.label;
+    a.setAttribute("aria-label", item.label);
+    a.appendChild(brandIcon(item.icon));
     row.appendChild(a);
   });
 }
@@ -845,7 +863,8 @@ function rowsFromEvents(events, cutoff) {
 async function init() {
   initSearch();
   renderGreeting();
-  renderAgents();
+  renderDock("agents", CONFIG.agents);
+  renderDock("tools", CONFIG.tools);
   renderShortcuts();
   initShortcutHotkeys();
   // Placeholder text first: renderHeatmap can resolve synchronously (cache

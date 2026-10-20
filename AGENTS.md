@@ -26,10 +26,16 @@ a shortcut URL, ask them to paste it, or skip that shortcut entirely.
 3. **AI Agents dock** — ask whether they want Claude, ChatGPT, and/or Gemini
    in the dock above Shortcuts (all three by default, in that order — drop
    any they don't use).
-4. **Shortcuts** — ask which of these they want, and the real URL for each:
+4. **Tools and Shortcuts** — two groups. Tools is an icon-only dock (no
+   labels, no hotkeys) for work apps they open all day (Gmail, Calendar,
+   Google Drive, Google Sheets, GitHub, Vercel); Shortcuts is everything else, as labeled
+   rows with hotkeys. Ask which they want in each, and the real URL for each:
    - GitHub profile
    - Gmail / email inbox
    - Calendar
+   - Google Drive (the `gdrive` icon)
+   - Google Sheets (the `gsheets` icon)
+   - Vercel dashboard (the `vercel` icon)
    - Notion (or another docs/task tool)
    - Portfolio / personal site
    - LinkedIn
@@ -58,7 +64,7 @@ Edit `config.js` with the answers from Step 1. Keep the file's existing
 shape — it's a single `CONFIG` object with `name`, `githubUser`, `maxDays`
 (default `7` is fine unless asked), an `agents` array of
 `{ label, url, icon }` (icon: `claude` / `openai` / `gemini` / `grok`), and a
-`shortcuts` array of `{ label, url, icon }`.
+`tools` array and a `shortcuts` array, each of `{ label, url, icon }`.
 
 `config.js` is gitignored on purpose — do not remove it from `.gitignore`
 unless the user explicitly asks to commit their personal data (e.g. because
